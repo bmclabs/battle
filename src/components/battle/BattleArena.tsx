@@ -1,0 +1,74 @@
+import React, { useEffect, useRef } from 'react';
+import { Fighter, GameMode } from '../../types';
+
+interface BattleArenaProps {
+  fighter1: Fighter | null;
+  fighter2: Fighter | null;
+  gameMode: GameMode;
+  winner: string | null;
+}
+
+const BattleArena: React.FC<BattleArenaProps> = ({
+  fighter1,
+  fighter2,
+  gameMode,
+  winner
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Adjust iframe size when container size changes
+  useEffect(() => {
+    if (!containerRef.current || !iframeRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (iframeRef.current) {
+          iframeRef.current.style.width = `${width}px`;
+          iframeRef.current.style.height = `${height}px`;
+        }
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="w-full h-full bg-black border-4 border-primary relative overflow-hidden">
+      {/* Iframe container with CRT effect */}
+      <div className="absolute inset-0 crt-effect">
+        <iframe
+          ref={iframeRef}
+          src="https://battle-memecoin-club.vercel.app"
+          className="w-full h-full border-0"
+          title="Battle Memecoin Club"
+          allowFullScreen
+          style={{ display: 'block' }}
+        />
+      </div>
+      
+      {/* Game mode indicator overlay */}
+      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 bg-black/70 px-4 py-1 border-2 border-primary pixel-pulse">
+        <p className="text-white text-sm uppercase">
+          {gameMode === GameMode.PREPARATION && "Preparation"}
+          {gameMode === GameMode.BATTLE && "Battle in Progress"}
+          {gameMode === GameMode.RESULT && "Match Complete"}
+        </p>
+      </div>
+      
+      {/* Loading state */}
+      {(!fighter1 || !fighter2) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-30">
+          <p className="text-white text-xl pixel-glitch">Loading fighters...</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default BattleArena; 

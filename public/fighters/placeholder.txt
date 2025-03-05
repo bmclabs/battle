@@ -1,0 +1,5 @@
+This directory should contain the following pixel art images:
+- pepe.png - A pixel art image of the PEPE memecoin character
+- doge.png - A pixel art image of the DOGE memecoin character
+
+You can create these images using pixel art tools or find free pixel art assets online. 
