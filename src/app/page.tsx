@@ -189,7 +189,7 @@ export default function Home() {
             <div className="grid grid-cols-12 gap-4">
               {/* Left Ad Banner */}
               <div className="col-span-3">
-                <div className="bg-black border-4 border-primary h-64 flex items-center justify-center pixel-border">
+                <div className="bg-black border-4 border-primary h-40 flex items-center justify-center pixel-border">
                   <p className="text-white text-sm pixel-pulse">AD SPACE</p>
                 </div>
               </div>
@@ -217,7 +217,7 @@ export default function Home() {
 
               {/* Right Ad Banner */}
               <div className="col-span-3">
-                <div className="bg-black border-4 border-primary h-64 flex items-center justify-center pixel-border">
+                <div className="bg-black border-4 border-primary h-40 flex items-center justify-center pixel-border">
                   <p className="text-white text-sm pixel-pulse">AD SPACE</p>
                 </div>
               </div>
@@ -234,7 +234,7 @@ export default function Home() {
         )}
       </main>
       
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

@@ -100,7 +100,7 @@ For demonstration purposes, you can use the controls in the bottom right corner 
 - **Battle**: Active battle mode
 - **Result**: Result mode
 
-## Pengembangan
+## Development
 
 This project is actively being developed. Features to be added include:
 - Improved Solana wallet integration
@@ -115,4 +115,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgments
 
 - Inspired by [SaltyBet](https://www.saltybet.com/)
-- Pixel art assets created by nils
+- Pixel art assets created by Nils

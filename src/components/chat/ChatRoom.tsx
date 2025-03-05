@@ -53,7 +53,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   return (
     <div className="w-full h-full flex flex-col bg-black border-4 border-primary pixel-border overflow-hidden">
       <div className="bg-primary p-2">
-        <h2 className="text-white text-center text-lg">BATTLE CHAT</h2>
+        <h2 className="text-white text-center text-lg">CHAT ROOM</h2>
       </div>
       
       {/* Messages container */}

@@ -168,7 +168,7 @@ const CoinChart: React.FC<CoinChartProps> = ({
   };
 
   return (
-    <div className="w-full h-64 bg-black border-4 border-primary p-4 pixel-border">
+    <div className="w-full h-40 bg-black border-4 border-primary p-4 pixel-border">
       {loading ? (
         <div className="flex items-center justify-center h-full">
           <p className="text-white text-sm pixel-glitch">Loading chart data...</p>

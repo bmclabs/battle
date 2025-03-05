@@ -29,7 +29,7 @@ const BetsList: React.FC<BetsListProps> = ({
   
   return (
     <div className="w-full h-full bg-black border-4 border-primary p-3 pixel-border flex flex-col overflow-hidden">
-      <h2 className="text-white text-center text-lg mb-2 pixel-pulse">ACTIVE BETS</h2>
+      <h2 className="text-white text-center text-lg mb-2">ACTIVE BETS</h2>
       
       {/* Bets summary */}
       {fighter1 && fighter2 && (
