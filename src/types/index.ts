@@ -62,4 +62,8 @@ export interface ChartData {
     backgroundColor: string;
   }[];
   marketData?: CoinMarketData;
+  timeRange?: {
+    start: string;
+    end: string;
+  };
 } 

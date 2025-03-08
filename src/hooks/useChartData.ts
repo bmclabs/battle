@@ -7,45 +7,65 @@ const COIN_ID_MAP: Record<string, { id: number, symbol: string }> = {
   'doge': { id: 74, symbol: 'DOGE' },
 };
 
-// Helper function to get random times in the last 24 hours
-const getRandomTimesInLast24 = (count: number): Date[] => {
+// Helper function to get a random 24-hour period from the past month
+const getRandomDayInLastMonth = (): { start: Date, end: Date } => {
   const now = new Date();
-  now.setMinutes(0, 0, 0); // Round to current hour UTC
+  const oneMonthAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
   
-  // Create array of all possible hours in last 24 hours
-  const allTimes: Date[] = [];
-  for (let i = 0; i < 24; i++) {
-    const hourBase = new Date(now.getTime() - (i * 60 * 60 * 1000));
-    // Add 4 15-minute intervals for each hour
-    for (let j = 0; j < 4; j++) {
-      const time = new Date(hourBase.getTime() + (j * 15 * 60 * 1000));
-      // Only add if we have a full hour ahead for averaging
-      if (time.getTime() + (60 * 60 * 1000) <= now.getTime()) {
-        allTimes.push(time);
-      }
+  // Get a random time between one month ago and 1 day ago
+  const minTime = oneMonthAgo.getTime();
+  const maxTime = now.getTime() - (24 * 60 * 60 * 1000); // Subtract 1 day from now
+  
+  // Generate random timestamp between minTime and maxTime
+  const randomTime = minTime + Math.random() * (maxTime - minTime);
+  
+  // Create start and end dates for the 24-hour period
+  const startDate = new Date(randomTime);
+  const endDate = new Date(randomTime + (24 * 60 * 60 * 1000)); // Add 24 hours
+  
+  // Round to nearest hour for cleaner timestamps
+  startDate.setMinutes(0, 0, 0);
+  endDate.setMinutes(0, 0, 0);
+  
+  return { start: startDate, end: endDate };
+};
+
+// Helper function to generate evenly spaced timestamps within a 24-hour period
+const generateTimestampsInDay = (start: Date, end: Date, count: number): Date[] => {
+  const result: Date[] = [];
+  const startTime = start.getTime();
+  const timeRange = end.getTime() - startTime;
+  
+  // Create evenly spaced intervals
+  for (let i = 0; i < count; i++) {
+    const time = new Date(startTime + (timeRange * i / (count - 1)));
+    result.push(time);
+  }
+  
+  return result;
+};
+
+// Helper function to find the closest price data point to a given timestamp
+const findClosestPrice = (quotes: any[], targetTime: number): number => {
+  if (!quotes || quotes.length === 0) {
+    throw new Error('No quotes available');
+  }
+  
+  // Find the quote with the closest timestamp to the target time
+  let closestQuote = quotes[0];
+  let closestDistance = Math.abs(new Date(closestQuote.timestamp).getTime() - targetTime);
+  
+  for (let i = 1; i < quotes.length; i++) {
+    const quote = quotes[i];
+    const distance = Math.abs(new Date(quote.timestamp).getTime() - targetTime);
+    
+    if (distance < closestDistance) {
+      closestQuote = quote;
+      closestDistance = distance;
     }
   }
   
-  // Shuffle array and take first 'count' elements
-  const shuffled = allTimes.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count).sort((a, b) => a.getTime() - b.getTime());
-};
-
-// Helper function to calculate average price from historical data
-const calculateHourlyAverage = (quotes: any[], startTime: number): number => {
-  // Filter quotes within 1 hour after startTime
-  const relevantQuotes = quotes.filter(quote => {
-    const quoteTime = new Date(quote.timestamp).getTime();
-    return quoteTime >= startTime && quoteTime < startTime + (60 * 60 * 1000);
-  });
-
-  if (relevantQuotes.length === 0) {
-    throw new Error('No data available for the selected time period');
-  }
-
-  // Calculate average price from all quotes in the hour
-  const sum = relevantQuotes.reduce((acc, quote) => acc + quote.quote.USD.price, 0);
-  return sum / relevantQuotes.length;
+  return closestQuote.quote.USD.price;
 };
 
 export const useChartData = (fighterId: string) => {
@@ -64,14 +84,14 @@ export const useChartData = (fighterId: string) => {
         // Get coin info from map
         const { symbol } = COIN_ID_MAP[fighterId];
         
-        // Get current time and time 24 hours ago
-        const now = new Date();
-        const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+        // Get a random 24-hour period from the past month
+        const { start, end } = getRandomDayInLastMonth();
+        console.log(`Selected time period: ${start.toISOString()} to ${end.toISOString()}`);
         
-        // Fetch both current market data and historical data
+        // Fetch both current market data and historical data for the specific 24-hour period
         const [marketResponse, historicalResponse] = await Promise.all([
           fetch(`/api/chart/${fighterId}/market?symbol=${symbol}`),
-          fetch(`/api/chart/${fighterId}/historical?symbol=${symbol}&start=${twentyFourHoursAgo.toISOString()}&end=${now.toISOString()}&interval=5m`)
+          fetch(`/api/chart/${fighterId}/historical?symbol=${symbol}&start=${start.toISOString()}&end=${end.toISOString()}&interval=1h`)
         ]);
         
         if (!marketResponse.ok || !historicalResponse.ok) {
@@ -101,42 +121,68 @@ export const useChartData = (fighterId: string) => {
           throw new Error('Invalid market data format');
         }
 
-        if (!historicalData.data?.quotes || !Array.isArray(historicalData.data.quotes)) {
+        // Check if historical data exists and has the expected structure
+        if (!historicalData.data || !historicalData.data.quotes) {
+          console.warn('Historical data missing or invalid format:', historicalData);
           throw new Error('Invalid historical data format');
         }
+        
+        // Ensure quotes is an array (even if empty)
+        const quotes = Array.isArray(historicalData.data.quotes) ? historicalData.data.quotes : [];
+        
+        // Log the quotes for debugging
+        console.log(`Received ${quotes.length} historical data points`);
+        if (quotes.length > 0) {
+          console.log('Sample quote:', quotes[0]);
+        }
+        
+        // If no historical data is available, we'll use current price for all data points
+        if (quotes.length === 0) {
+          console.warn('No historical quotes available, using current price for all data points');
+        }
 
-        // Get 8 random times from the last 24 hours
-        const selectedTimes = getRandomTimesInLast24(8);
+        // Sort quotes by timestamp to ensure they're in chronological order
+        quotes.sort((a: any, b: any) => {
+          return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+        });
+
+        // Process the historical data
+        let timestamps: Date[] = [];
+        let prices: number[] = [];
         
-        // Generate price data for each selected time
-        const timestamps: number[] = [];
-        const prices: number[] = [];
-        
-        // Process each selected time
-        for (const time of selectedTimes) {
-          try {
-            const avgPrice = calculateHourlyAverage(
-              historicalData.data.quotes,
-              time.getTime()
-            );
-            
-            timestamps.push(time.getTime());
-            prices.push(avgPrice);
-          } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            console.warn(`Skipping time ${time.toISOString()}: ${errorMessage}`);
+        if (quotes.length >= 8) {
+          // If we have enough data points, select 8 evenly spaced points
+          const step = Math.floor(quotes.length / 8);
+          for (let i = 0; i < 8; i++) {
+            const index = Math.min(i * step, quotes.length - 1);
+            const quote = quotes[index];
+            timestamps.push(new Date(quote.timestamp));
+            prices.push(quote.quote.USD.price);
+          }
+        } else if (quotes.length > 0) {
+          // If we have some data but not enough, use what we have
+          quotes.forEach((quote: any) => {
+            timestamps.push(new Date(quote.timestamp));
+            prices.push(quote.quote.USD.price);
+          });
+        } else {
+          // If we have no data, generate evenly spaced timestamps and use current price
+          const timeStep = (end.getTime() - start.getTime()) / 7;
+          for (let i = 0; i < 8; i++) {
+            timestamps.push(new Date(start.getTime() + i * timeStep));
+            prices.push(marketData.price);
           }
         }
 
-        if (timestamps.length === 0) {
-          throw new Error('No valid data points could be calculated');
-        }
+        // Log the data we're using for the chart
+        console.log('Chart timestamps:', timestamps.map(t => t.toISOString()));
+        console.log('Chart prices:', prices);
         
         // Format data for chart
         const formattedData: ChartData = {
           labels: timestamps.map(timestamp => {
-            const date = new Date(timestamp);
-            return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}`;
+            // Format as "MM/DD HH:MM" for 24-hour period
+            return `${(timestamp.getUTCMonth() + 1).toString().padStart(2, '0')}/${timestamp.getUTCDate().toString().padStart(2, '0')} ${timestamp.getUTCHours().toString().padStart(2, '0')}:00`;
           }),
           datasets: [
             {
@@ -147,6 +193,11 @@ export const useChartData = (fighterId: string) => {
             },
           ],
           marketData: marketData,
+          // Add time range information for display
+          timeRange: {
+            start: start.toISOString(),
+            end: end.toISOString()
+          }
         };
         
         setChartData(formattedData);
