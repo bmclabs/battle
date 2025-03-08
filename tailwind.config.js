@@ -8,8 +8,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#9945FF",
-        secondary: "#14F195",
+        primary: "#006039",
+        secondary: "#FF69B4",
       },
       fontFamily: {
         pixel: ['"Press Start 2P"', 'cursive'],

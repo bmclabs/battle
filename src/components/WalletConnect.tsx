@@ -22,15 +22,15 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
     <div className="flex items-center space-x-4">
       {connected ? (
         <>
-          <div className="bg-black/70 px-4 py-2 border-2 border-primary rounded-full pixel-border">
+          <div className="flex gap-2 bg-black/70 px-4 py-2 border-2 border-primary rounded-full pixel-border">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-white text-xs">
-                {formatWalletAddress(walletAddress)}
+                {formatWalletAddress(walletAddress)} |
               </span>
             </div>
-            <div className="text-gray-300 text-xs mt-1">
-              {formatSolAmount(balance)} SOL
+            <div className="text-[#FEC200] text-xs">
+             {formatSolAmount(balance)} <span className="text-[#9945FF]">SOL</span>
             </div>
           </div>
           <button

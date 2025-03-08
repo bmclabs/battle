@@ -46,6 +46,13 @@ export interface ChatMessage {
 }
 
 // Chart types
+export interface CoinMarketData {
+  price: number;
+  marketCap: number;
+  volume24h: number;
+  percentChange24h: number;
+}
+
 export interface ChartData {
   labels: string[];
   datasets: {
@@ -54,4 +61,5 @@ export interface ChartData {
     borderColor: string;
     backgroundColor: string;
   }[];
+  marketData?: CoinMarketData;
 } 

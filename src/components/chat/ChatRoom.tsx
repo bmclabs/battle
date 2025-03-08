@@ -60,7 +60,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-2 pixel-scrollbar crt-effect"
+        className="flex-1 overflow-y-auto p-2 pixel-scrollbar"
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -73,8 +73,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                 key={msg.id} 
                 className={`p-1 rounded ${
                   msg.walletAddress === walletAddress
-                    ? 'bg-primary/20 border-l-2 border-primary'
-                    : 'bg-gray-800/50 border-l-2 border-gray-700'
+                    ? 'bg-[#006039]/60 border-l-2 border-primary'
+                    : 'bg-[#006039]/40 border-l-2 border-primary'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">

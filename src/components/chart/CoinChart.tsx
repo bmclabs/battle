@@ -91,6 +91,19 @@ const CoinChart: React.FC<CoinChartProps> = ({
     return null;
   }
 
+  const formatNumber = (num: number): string => {
+    if (num >= 1e9) {
+      return `$${(num / 1e9).toFixed(2)}B`;
+    }
+    if (num >= 1e6) {
+      return `$${(num / 1e6).toFixed(2)}M`;
+    }
+    if (num >= 1e3) {
+      return `$${(num / 1e3).toFixed(2)}K`;
+    }
+    return `$${num.toFixed(2)}`;
+  };
+
   // Chart options
   const options: ChartOptions<'line'> = {
     responsive: true,
@@ -182,12 +195,57 @@ const CoinChart: React.FC<CoinChartProps> = ({
           <p className="text-white text-sm">No chart data available</p>
         </div>
       ) : (
-        <div className="h-full crt-effect">
-          <Line 
-            options={options} 
-            data={chartData} 
-            plugins={[candlestickPlugin]}
-          />
+        <div className="h-full flex gap-4">
+          {/* Market Info */}
+          <div className="w-1/3 flex flex-col justify-between">
+            <div>
+              <div className="space-y-2">
+                <div className="text-[10px]">
+                  <p className="text-gray-400 text-[10px]">Price</p>
+                  <p className="text-white text-[10px]">
+                    {formatNumber(chartData.marketData?.price || 0)}
+                    <span className={`ml-2 text-[10px] ${
+                      (chartData.marketData?.percentChange24h || 0) >= 0 
+                        ? 'text-green-500' 
+                        : 'text-red-500'
+                    }`}>
+                      {(chartData.marketData?.percentChange24h || 0).toFixed(2)}%
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-[10px]">Market Cap</p>
+                  <p className="text-white text-[10px]">
+                    {formatNumber(chartData.marketData?.marketCap || 0)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-[10px]">Volume 24h</p>
+                  <p className="text-white text-[10px]">
+                    {formatNumber(chartData.marketData?.volume24h || 0)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Chart */}
+          <div className="w-2/3 h-full">
+            <Line 
+              options={{
+                ...options,
+                maintainAspectRatio: false,
+                plugins: {
+                  ...options.plugins,
+                  legend: {
+                    display: false
+                  }
+                }
+              }} 
+              data={chartData} 
+              plugins={[candlestickPlugin]}
+            />
+          </div>
         </div>
       )}
     </div>
