@@ -28,12 +28,16 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Predefined bet amounts
+  const betOptions = [0.1, 0.5, 1, 5, 10, 25, 50, 100];
+
   // Only show in preparation mode
   if (gameMode !== GameMode.PREPARATION || !fighter1 || !fighter2) {
     return null;
   }
 
   const handleSelectFighter = (fighterId: string) => {
+    if (!walletConnected || isSubmitting) return;
     setSelectedFighter(fighterId);
     setError(null);
   };
@@ -44,6 +48,16 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
     if (/^\d*\.?\d*$/.test(value)) {
       setBetAmount(value);
       setError(null);
+    }
+  };
+
+  const handleSelectBetAmount = (amount: number) => {
+    // Don't allow selecting amounts greater than wallet balance
+    if (amount <= walletBalance) {
+      setBetAmount(amount.toString());
+      setError(null);
+    } else {
+      setError('Insufficient balance');
     }
   };
 
@@ -93,9 +107,10 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
           onClick={() => handleSelectFighter(fighter1.id)}
           className={`pixel-button ${
             selectedFighter === fighter1.id 
-              ? 'bg-primary border-white' 
+              ? 'bg-secondary border-white' 
               : 'bg-gray-800 border-primary'
-          } py-1 px-2`}
+          } py-1 px-2 ${!walletConnected || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:border-white'}`}
+          disabled={!walletConnected || isSubmitting}
         >
           {fighter1.name}
         </button>
@@ -106,7 +121,8 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
             selectedFighter === fighter2.id 
               ? 'bg-secondary border-white' 
               : 'bg-gray-800 border-secondary'
-          } py-1 px-2`}
+          } py-1 px-2 ${!walletConnected || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:border-white'}`}
+          disabled={!walletConnected || isSubmitting}
         >
           {fighter2.name}
         </button>
@@ -123,12 +139,12 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
             value={betAmount}
             onChange={handleBetAmountChange}
             placeholder="0.00"
-            className="flex-1 min-w-0 bg-gray-800 text-white p-1 text-sm border-2 border-gray-700 focus:border-primary outline-none"
+            className={`flex-1 min-w-0 bg-gray-800 text-white p-1 text-sm border-2 border-gray-700 focus:border-primary outline-none ${!walletConnected || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={!walletConnected || isSubmitting}
           />
           <button
-            onClick={() => setBetAmount(walletBalance.toString())}
-            className="bg-gray-700 text-white px-2 text-xs whitespace-nowrap"
+            onClick={() => walletConnected && !isSubmitting && setBetAmount(walletBalance.toString())}
+            className={`bg-gray-700 text-white px-2 text-xs whitespace-nowrap ${!walletConnected || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-600'}`}
             disabled={!walletConnected || isSubmitting}
           >
             MAX
@@ -141,11 +157,36 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
         )}
       </div>
       
+      {/* Bet amount options */}
+      <div className="mb-3">
+        <label className="block text-white text-xs mb-1">
+          Quick Select
+        </label>
+        <div className="grid grid-cols-4 gap-1">
+          {betOptions.map((amount) => (
+            <button
+              key={amount}
+              onClick={() => walletConnected && !isSubmitting && handleSelectBetAmount(amount)}
+              className={`
+                text-xs py-1 px-1 
+                ${parseFloat(betAmount) === amount ? 'bg-secondary text-white' : 'bg-gray-800 text-gray-300'} 
+                border border-gray-700 hover:border-secondary
+                ${!walletConnected || isSubmitting || amount > walletBalance ? 'opacity-50 cursor-not-allowed' : ''}
+                transition-colors
+              `}
+              disabled={!walletConnected || isSubmitting || amount > walletBalance}
+            >
+              {amount} SOL
+            </button>
+          ))}
+        </div>
+      </div>
+      
       {/* Submit button */}
       <button
         onClick={handleSubmitBet}
         disabled={!walletConnected || isSubmitting || !selectedFighter || !betAmount}
-        className="w-full pixel-button disabled:opacity-50 disabled:cursor-not-allowed py-1"
+        className={`w-full pixel-button py-1 ${!walletConnected || isSubmitting || !selectedFighter || !betAmount ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary'}`}
       >
         {isSubmitting ? 'PLACING BET...' : 'PLACE BET'}
       </button>
