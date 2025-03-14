@@ -1,54 +1,77 @@
 # Battle Memecoin Club
 
-is a pixel art betting game where memecoins battle for supremacy. Users can place bets on their favorite memecoin fighters and win SOL based on the outcome of the battle.
+A pixel art betting game where memecoins battle for supremacy.
 
 ## Features
 
-- Real-time memecoin battle with pixel art graphics
-- Direct betting with SOL (Solana)
-- Real-time chat for users to discuss the battle
-- Price chart for analyzing fighter performance
-- Responsive design for desktop and mobile
+- Connect to Solana wallets (Phantom, Solflare)
+- Authenticate with wallet signature
+- Place bets on memecoin battles
+- Real-time chat with other players
+- View memecoin price charts
+- Pixel art battle animations
 
-## Tech Stack
+## Wallet Connection Flow
 
-- **Frontend**: Next.js, TypeScript, Tailwind CSS
-- **Blockchain**: Solana Web3.js
-- **Real-time**: WebSockets (Socket.io)
-- **Charts**: Chart.js, react-chartjs-2
-- **Styling**: Pixel art theme with custom CSS
+The application implements a secure wallet connection flow:
+
+1. User clicks "CONNECT WALLET" button
+2. Wallet adapter modal appears for user to select their wallet (Phantom, Solflare)
+3. After connecting wallet, a sign message modal appears
+4. User must sign the message to authenticate with the backend
+5. The sign message modal cannot be closed without either signing or disconnecting
+6. After successful authentication, user can place bets and use chat
+
+## Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```
+# Solana Cluster Configuration
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
+
+# API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:3080/api
+```
 
 ## Getting Started
 
-### Prerequisites
+First, install dependencies:
 
-- Node.js 18+ and npm
-- Wallet Solana (seperti Phantom)
+```bash
+npm install
+# or
+yarn install
+```
 
-### Installation
+Then, run the development server:
 
-1. Clone repository:
-   ```bash
-   git clone https://github.com/yourusername/battle-memecoin-club.git
-   cd battle-memecoin-club
-   ```
+```bash
+npm run dev
+# or
+yarn dev
+```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-3. Run development server:
-   ```bash
-   npm run dev
-   ```
+## Backend API Endpoints
 
-   Or use the start script:
-   ```bash
-   ./start.sh
-   ```
+The application uses the following backend API endpoints for wallet authentication:
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+- `POST /api/auth/challenge` - Get a challenge message for wallet signature
+- `POST /api/auth/verify` - Verify the signature and get authentication token
+- `GET /api/auth/user` - Get the current user data
+- `POST /api/auth/logout` - Logout and invalidate the token
+
+## Technologies Used
+
+- Next.js
+- React
+- TypeScript
+- Solana Web3.js
+- Solana Wallet Adapter
+- TailwindCSS
+- Chart.js
 
 ## Project Structure
 

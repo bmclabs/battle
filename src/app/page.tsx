@@ -9,6 +9,7 @@ import BettingPanel from '../components/betting/BettingPanel';
 import BetsList from '../components/betting/BetsList';
 import CoinChart from '../components/chart/CoinChart';
 import GameModeSwitcher from '../components/GameModeSwitcher';
+import SignMessageModal from '../components/SignMessageModal';
 import { useMatch } from '../hooks/useMatch';
 import { useBetting } from '../hooks/useBetting';
 import { useChat } from '../hooks/useChat';
@@ -43,14 +44,20 @@ export default function Home() {
     sendMessage 
   } = useChat();
 
-  // Get wallet data
+  // Get wallet data with authentication
   const {
     connected,
     walletAddress,
     balance,
     connecting,
+    error,
+    user,
+    token,
+    showSignModal,
+    challenge,
     connect,
     disconnect,
+    verifyWalletSignature,
     sendTransaction
   } = useWallet();
 
@@ -72,7 +79,11 @@ export default function Home() {
 
   // Handle placing a bet
   const handlePlaceBet = async (fighterId: string, amount: number) => {
-    if (!connected) return;
+    if (!connected || !token) {
+      // If not authenticated, connect wallet first
+      await handleConnect();
+      if (!connected || !token) return;
+    }
     
     try {
       // Send transaction
@@ -89,16 +100,30 @@ export default function Home() {
 
   // Handle sending a chat message
   const handleSendMessage = async (message: string) => {
-    if (!connected) return;
+    if (!connected || !token) {
+      // If not authenticated, connect wallet first
+      await handleConnect();
+      if (!connected || !token) return;
+    }
+    
     await sendMessage(walletAddress, message);
   };
 
-  // Handle wallet connection
+  // Handle wallet connection with authentication
   const handleConnect = async () => {
     try {
       await connect();
     } catch (err) {
       console.error('Failed to connect wallet:', err);
+    }
+  };
+
+  // Handle wallet verification
+  const handleVerify = async () => {
+    try {
+      await verifyWalletSignature();
+    } catch (err) {
+      console.error('Failed to verify wallet:', err);
     }
   };
 
@@ -111,6 +136,14 @@ export default function Home() {
   const totalBetsFighter1 = match?.fighter1 ? getTotalBets(match.fighter1.id) : 0;
   const totalBetsFighter2 = match?.fighter2 ? getTotalBets(match.fighter2.id) : 0;
 
+  // Display wallet error if any
+  useEffect(() => {
+    if (error) {
+      console.error('Wallet error:', error);
+      // You could add a toast notification here
+    }
+  }, [error]);
+
   return (
     <div className="min-h-screen flex flex-col bg-black">
       <Header
@@ -118,9 +151,21 @@ export default function Home() {
         walletAddress={walletAddress}
         balance={balance}
         connecting={connecting}
+        user={user}
         onConnect={handleConnect}
         onDisconnect={disconnect}
       />
+      
+      {/* Sign Message Modal */}
+      {showSignModal && (
+        <SignMessageModal
+          walletAddress={walletAddress}
+          challenge={challenge}
+          isLoading={connecting}
+          onVerify={handleVerify}
+          onDisconnect={disconnect}
+        />
+      )}
       
       <main className="flex-1 container mx-auto p-4">
         {matchLoading ? (

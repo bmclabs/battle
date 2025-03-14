@@ -1,12 +1,24 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
 import WalletConnect from './WalletConnect';
+
+interface User {
+  id: string;
+  wallet_address: string;
+  username: string;
+  avatar_url: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface HeaderProps {
   connected: boolean;
   walletAddress: string;
   balance: number;
   connecting: boolean;
+  user?: User | null;
   onConnect: () => Promise<void>;
   onDisconnect: () => void;
 }
@@ -16,6 +28,7 @@ const Header: React.FC<HeaderProps> = ({
   walletAddress,
   balance,
   connecting,
+  user,
   onConnect,
   onDisconnect
 }) => {
@@ -41,6 +54,7 @@ const Header: React.FC<HeaderProps> = ({
           walletAddress={walletAddress}
           balance={balance}
           connecting={connecting}
+          user={user}
           onConnect={onConnect}
           onDisconnect={onDisconnect}
         />

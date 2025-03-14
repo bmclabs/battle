@@ -1,11 +1,23 @@
+'use client';
+
 import React from 'react';
 import { formatWalletAddress, formatSolAmount } from '../utils';
+
+interface User {
+  id: string;
+  wallet_address: string;
+  username: string;
+  avatar_url: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface WalletConnectProps {
   connected: boolean;
   walletAddress: string;
   balance: number;
   connecting: boolean;
+  user?: User | null;
   onConnect: () => Promise<void>;
   onDisconnect: () => void;
 }
@@ -15,6 +27,7 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
   walletAddress,
   balance,
   connecting,
+  user,
   onConnect,
   onDisconnect
 }) => {
@@ -26,7 +39,7 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-white text-xs">
-                {formatWalletAddress(walletAddress)} |
+                {user?.username ? `${user.username} | ` : ''}{formatWalletAddress(walletAddress)} |
               </span>
             </div>
             <div className="text-[#FEC200] text-xs">
