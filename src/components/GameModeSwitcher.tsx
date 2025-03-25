@@ -1,5 +1,6 @@
 import React from 'react';
 import { GameMode } from '../types';
+import Button from './ui/Button';
 
 interface GameModeSwitcherProps {
   currentMode: GameMode;
@@ -11,39 +12,30 @@ const GameModeSwitcher: React.FC<GameModeSwitcherProps> = ({
   onModeChange
 }) => {
   return (
-    <div className="fixed bottom-4 right-4 bg-black/80 p-2 border-2 border-primary rounded z-50 pixel-border">
+    <div className="fixed bottom-4 right-4 bg-black/80 p-2 border border-primary rounded z-50 retro-container">
       <div className="text-white text-xs mb-2 pixel-pulse">Demo Controls:</div>
       <div className="flex space-x-2">
-        <button
+        <Button
           onClick={() => onModeChange(GameMode.PREPARATION)}
-          className={`text-xs px-2 py-1 ${
-            currentMode === GameMode.PREPARATION
-              ? 'bg-primary text-white'
-              : 'bg-gray-800 text-gray-300'
-          } pixel-button`}
+          variant={currentMode === GameMode.PREPARATION ? 'primary' : 'dark'}
+          size="xs"
         >
           Preparation
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => onModeChange(GameMode.BATTLE)}
-          className={`text-xs px-2 py-1 ${
-            currentMode === GameMode.BATTLE
-              ? 'bg-primary text-white'
-              : 'bg-gray-800 text-gray-300'
-          } pixel-button`}
+          variant={currentMode === GameMode.BATTLE ? 'primary' : 'dark'}
+          size="xs"
         >
           Battle
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => onModeChange(GameMode.RESULT)}
-          className={`text-xs px-2 py-1 ${
-            currentMode === GameMode.RESULT
-              ? 'bg-primary text-white'
-              : 'bg-gray-800 text-gray-300'
-          } pixel-button`}
+          variant={currentMode === GameMode.RESULT ? 'primary' : 'dark'}
+          size="xs"
         >
           Result
-        </button>
+        </Button>
       </div>
     </div>
   );

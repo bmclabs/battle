@@ -5,8 +5,7 @@ import { CoinMarketData } from '@/types';
 const CMC_API_KEY = process.env.COINMARKETCAP_API_KEY || 'f5d884c4-217d-4a2c-9074-dd372493acf1';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { fighterId: string } }
+  request: NextRequest
 ) {
   try {
     const { searchParams } = new URL(request.url);

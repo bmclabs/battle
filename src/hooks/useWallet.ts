@@ -17,7 +17,7 @@ interface User {
 
 export const useWallet = () => {
   const wallet = useSolanaWallet();
-  const { publicKey, connected, connecting, disconnect: disconnectWallet, signMessage: signMessageWallet } = wallet;
+  const { publicKey, connected, connecting, disconnect: disconnectWallet } = wallet;
   const { setVisible } = useWalletModal();
   
   const [walletAddress, setWalletAddress] = useState<string>('');
@@ -30,7 +30,30 @@ export const useWallet = () => {
   // State for sign message modal
   const [showSignModal, setShowSignModal] = useState<boolean>(false);
   const [challenge, setChallenge] = useState<string>('');
-  const [challengeExpiry, setChallengeExpiry] = useState<number>(0);
+
+  // Start authentication process
+  const startAuthentication = useCallback(async () => {
+    try {
+      if (!connected || !publicKey) {
+        throw new Error('Wallet not connected');
+      }
+      
+      setIsAuthenticating(true);
+      const walletAddressStr = publicKey.toString();
+      
+      // Get challenge from server
+      const { challenge: challengeStr } = await getChallenge(walletAddressStr);
+      
+      // Set challenge and show sign modal
+      setChallenge(challengeStr);
+      setShowSignModal(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start authentication');
+      console.error(err);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [connected, publicKey]);
 
   // Update wallet address when connected
   useEffect(() => {
@@ -46,7 +69,7 @@ export const useWallet = () => {
       setShowSignModal(false);
       setChallenge('');
     }
-  }, [connected, publicKey, token]);
+  }, [connected, publicKey, token, showSignModal, isAuthenticating, startAuthentication]);
 
   // Fetch balance when connected
   useEffect(() => {
@@ -54,10 +77,10 @@ export const useWallet = () => {
       if (connected && publicKey) {
         try {
           // Get network from environment variables
-          const networkEnv = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
+          const networkEnv = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet';
           
           // Create a connection to the Solana cluster
-          const connection = new Connection(clusterApiUrl(networkEnv as any), 'confirmed');
+          const connection = new Connection(clusterApiUrl(networkEnv as 'devnet' | 'testnet' | 'mainnet-beta'), 'confirmed');
           const balance = await connection.getBalance(publicKey);
           setBalance(balance / LAMPORTS_PER_SOL);
         } catch (err) {
@@ -96,31 +119,6 @@ export const useWallet = () => {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('authToken');
       }
-    }
-  };
-
-  // Start authentication process
-  const startAuthentication = async () => {
-    try {
-      if (!connected || !publicKey) {
-        throw new Error('Wallet not connected');
-      }
-      
-      setIsAuthenticating(true);
-      const walletAddressStr = publicKey.toString();
-      
-      // Get challenge from server
-      const { challenge: challengeStr, expiresAt } = await getChallenge(walletAddressStr);
-      
-      // Set challenge and show sign modal
-      setChallenge(challengeStr);
-      setChallengeExpiry(expiresAt);
-      setShowSignModal(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start authentication');
-      console.error(err);
-    } finally {
-      setIsAuthenticating(false);
     }
   };
 

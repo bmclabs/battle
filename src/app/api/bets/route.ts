@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Bet } from '../../../types';
 
 // Mock bets data
-let bets: Bet[] = [
+const bets: Bet[] = [
   {
     walletAddress: "8xJUNEBuJR5dNuEtRPMJD5iBjKRtQGP5Bz7LWGEh2eQ1",
     amount: 2.5,
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     bets.push(newBet);
     
     return NextResponse.json(newBet, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to place bet' },
       { status: 500 }

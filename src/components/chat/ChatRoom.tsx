@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage } from '../../types';
 import { formatWalletAddress } from '../../utils';
+import Button from '../ui/Button';
 
 interface ChatRoomProps {
   messages: ChatMessage[];
@@ -51,7 +52,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-black border-4 border-primary pixel-border overflow-hidden">
+    <div className="w-full h-full flex flex-col bg-black/80 border-2 border-primary retro-container overflow-hidden">
       <div className="bg-primary p-2">
         <h2 className="text-white text-center text-lg">CHAT ROOM</h2>
       </div>
@@ -73,8 +74,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                 key={msg.id} 
                 className={`p-1 rounded ${
                   msg.walletAddress === walletAddress
-                    ? 'bg-[#006039]/60 border-l-2 border-primary'
-                    : 'bg-[#006039]/40 border-l-2 border-primary'
+                    ? 'bg-primary/40 border-l-2 border-primary'
+                    : 'bg-primary/30 border-l-2 border-primary'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
@@ -94,7 +95,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
       </div>
       
       {/* Message input */}
-      <form onSubmit={handleSendMessage} className="p-2 border-t-2 border-primary">
+      <form onSubmit={handleSendMessage} className="p-2 border-t border-primary">
         {connected ? (
           <div className="flex gap-2">
             <input
@@ -102,19 +103,20 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 min-w-0 bg-gray-800 text-white p-1 text-xs border-2 border-gray-700 focus:border-primary outline-none"
+              className="retro-input flex-1 min-w-0"
               maxLength={100}
             />
-            <button
+            <Button
               type="submit"
               disabled={!message.trim()}
-              className="bg-primary text-white px-2 py-1 text-xs whitespace-nowrap disabled:opacity-50 pixel-button"
+              variant="primary"
+              size="xs"
             >
               SEND
-            </button>
+            </Button>
           </div>
         ) : (
-          <div className="bg-gray-800 p-2 text-center">
+          <div className="bg-black/50 p-2 text-center retro-container">
             <p className="text-gray-400 text-xs">Connect wallet to chat</p>
           </div>
         )}

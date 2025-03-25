@@ -28,7 +28,7 @@ const BetsList: React.FC<BetsListProps> = ({
   }
   
   return (
-    <div className="w-full h-full bg-black border-4 border-primary p-3 pixel-border flex flex-col overflow-hidden">
+    <div className="w-full h-full bg-black/80 border-2 border-primary p-3 retro-container flex flex-col overflow-hidden">
       <h2 className="text-white text-center text-lg mb-2">ACTIVE BETS</h2>
       
       {/* Bets summary */}
@@ -62,7 +62,7 @@ const BetsList: React.FC<BetsListProps> = ({
               return (
                 <div 
                   key={`${bet.walletAddress}-${bet.timestamp}`}
-                  className={`p-1 border ${isFighter1 ? 'border-primary' : 'border-secondary'} bg-gray-900`}
+                  className={`p-1 border ${isFighter1 ? 'border-primary' : 'border-secondary'} bg-black/80`}
                 >
                   <div className="flex justify-between items-center">
                     <div className="text-gray-300 text-xs">

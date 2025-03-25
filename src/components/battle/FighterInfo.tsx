@@ -14,7 +14,7 @@ const FighterInfo: React.FC<FighterInfoProps> = ({
   isPrimary = true
 }) => {
   return (
-    <div className={`bg-black border-4 ${isPrimary ? 'border-primary' : 'border-secondary'} p-4 pixel-border`}>
+    <div className={`bg-black/80 border-2 ${isPrimary ? 'border-primary' : 'border-secondary'} p-4 retro-container`}>
       <div className="flex items-center space-x-4">
         <div className="relative w-16 h-16 pixel-pulse">
           <Image

@@ -4,8 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const CMC_API_KEY = process.env.COINMARKETCAP_API_KEY || 'f5d884c4-217d-4a2c-9074-dd372493acf1';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { fighterId: string } }
+  request: NextRequest
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -80,9 +79,6 @@ export async function GET(
     
     const data = await response.json();
     
-    // Log the actual response structure for debugging
-    console.log('CoinMarketCap historical API response structure:', JSON.stringify(data, null, 2));
-    
     // Check if the API returned an error
     if (data.status?.error_code && data.status.error_code !== 0) {
       console.error('CoinMarketCap API returned an error:', data.status);
@@ -141,14 +137,25 @@ export async function GET(
     const quotes = bestCoin.quotes;
     
     // Sort quotes by timestamp to ensure they're in chronological order
-    quotes.sort((a: any, b: any) => {
+    quotes.sort((a: { timestamp: string }, b: { timestamp: string }) => {
       return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
     });
     
     // Format response to match expected structure in the frontend
     return NextResponse.json({
       data: {
-        quotes: quotes.map((quote: any) => {
+        quotes: quotes.map((quote: { 
+          timestamp: string; 
+          quote?: { 
+            USD?: { 
+              price?: number; 
+              volume_24h?: number; 
+              market_cap?: number; 
+              percent_change_1h?: number; 
+              percent_change_24h?: number; 
+            } 
+          } 
+        }) => {
           // Ensure all required fields exist with fallbacks
           const usdQuote = quote.quote?.USD || {};
           return {

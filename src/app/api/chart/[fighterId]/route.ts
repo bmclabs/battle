@@ -4,8 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const CMC_API_KEY = 'f5d884c4-217d-4a2c-9074-dd372493acf1';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { fighterId: string } }
+  request: NextRequest
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -47,17 +46,23 @@ export async function GET(
     const quotes = data.data.quotes;
     
     // Format data for candlestick chart
-    const timestamps = quotes.map((quote: any) => quote.time_open);
-    const prices = quotes.map((quote: any) => quote.quote.USD.close);
-    const opens = quotes.map((quote: any) => quote.quote.USD.open);
-    const highs = quotes.map((quote: any) => quote.quote.USD.high);
-    const lows = quotes.map((quote: any) => quote.quote.USD.low);
-    const volumes = quotes.map((quote: any) => quote.quote.USD.volume);
+    const timestamps = quotes.map((quote: { time_open: number }) => quote.time_open);
+    const prices = quotes.map((quote: { quote: { USD: { close: number } } }) => quote.quote.USD.close);
     
     return NextResponse.json({
       timestamps,
       prices,
-      ohlc: quotes.map((quote: any) => ({
+      ohlc: quotes.map((quote: { 
+        time_open: number; 
+        quote: { 
+          USD: { 
+            open: number; 
+            high: number; 
+            low: number; 
+            close: number; 
+          } 
+        } 
+      }) => ({
         open: quote.quote.USD.open,
         high: quote.quote.USD.high,
         low: quote.quote.USD.low,

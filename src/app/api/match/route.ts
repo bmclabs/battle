@@ -8,7 +8,7 @@ export async function GET() {
     fighter1: {
       id: "pepe",
       name: "PEPE",
-      image: "https://via.placeholder.com/200x200/9945FF/FFFFFF?text=PEPE",
+      image: "https://via.placeholder.com/200x200/FF69B4/FFFFFF?text=PEPE",
       stats: {
         attack: 75,
         defense: 60,

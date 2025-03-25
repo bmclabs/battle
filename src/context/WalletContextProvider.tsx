@@ -38,7 +38,7 @@ export const WalletContextProvider: FC<WalletContextProviderProps> = ({ children
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter(),
     ],
-    [network]
+    []
   );
 
   return (

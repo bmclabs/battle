@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ChatMessage } from '../../../types';
 
 // Mock chat messages
-let messages: ChatMessage[] = [
+const messages: ChatMessage[] = [
   {
     id: "msg-1",
     walletAddress: "8xJUNEBuJR5dNuEtRPMJD5iBjKRtQGP5Bz7LWGEh2eQ1",
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     messages.push(newMessage);
     
     return NextResponse.json(newMessage, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to send message' },
       { status: 500 }

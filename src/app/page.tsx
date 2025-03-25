@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BattleArena from '../components/battle/BattleArena';
@@ -34,8 +34,7 @@ export default function Home() {
   const { 
     bets, 
     submitBet, 
-    getTotalBets,
-    placingBet
+    getTotalBets
   } = useBetting();
 
   // Get chat data
@@ -60,9 +59,6 @@ export default function Home() {
     verifyWalletSignature,
     sendTransaction
   } = useWallet();
-
-  // State for selected fighter for chart
-  const [selectedChartFighter, setSelectedChartFighter] = useState<string | null>(null);
 
   // Get chart data for selected fighter
   const { 
@@ -145,17 +141,7 @@ export default function Home() {
   }, [error]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-black">
-      <Header
-        connected={connected}
-        walletAddress={walletAddress}
-        balance={balance}
-        connecting={connecting}
-        user={user}
-        onConnect={handleConnect}
-        onDisconnect={disconnect}
-      />
-      
+    <div className="min-h-screen flex flex-col relative">
       {/* Sign Message Modal */}
       {showSignModal && (
         <SignMessageModal
@@ -167,10 +153,20 @@ export default function Home() {
         />
       )}
       
-      <main className="flex-1 container mx-auto p-4">
+      <Header
+        connected={connected}
+        walletAddress={walletAddress}
+        balance={balance}
+        connecting={connecting}
+        user={user}
+        onConnect={handleConnect}
+        onDisconnect={disconnect}
+      />
+      
+      <main className="flex-1 container mx-auto p-4 z-10">
         {matchLoading ? (
           <div className="flex items-center justify-center h-64">
-            <p className="text-white text-xl">Loading battle...</p>
+            <p className="text-white text-xl pixel-glitch">Loading battle...</p>
           </div>
         ) : (
           <div className="flex flex-col">
@@ -187,8 +183,6 @@ export default function Home() {
                       onPlaceBet={handlePlaceBet}
                       walletConnected={connected}
                       walletBalance={balance}
-                      totalBetsFighter1={totalBetsFighter1}
-                      totalBetsFighter2={totalBetsFighter2}
                     />
                   </div>
                 )}
@@ -214,7 +208,6 @@ export default function Home() {
                     fighter1={match?.fighter1 || null}
                     fighter2={match?.fighter2 || null}
                     gameMode={gameMode}
-                    winner={match?.winner || null}
                   />
                 </div>
               </div>
@@ -234,7 +227,7 @@ export default function Home() {
             <div className="grid grid-cols-12 gap-4">
               {/* Left Ad Banner */}
               <div className="col-span-3">
-                <div className="bg-black border-4 border-primary h-40 flex items-center justify-center pixel-border">
+                <div className="bg-black/50 border-2 border-primary h-40 flex items-center justify-center retro-container">
                   <p className="text-white text-sm pixel-pulse">AD SPACE</p>
                 </div>
               </div>
@@ -247,7 +240,6 @@ export default function Home() {
                   chartData={fighter1ChartData}
                   loading={fighter1ChartLoading}
                   error={fighter1ChartError}
-                  gameMode={gameMode}
                 />
                 
                 {/* Fighter 2 Chart */}
@@ -256,13 +248,12 @@ export default function Home() {
                   chartData={fighter2ChartData}
                   loading={fighter2ChartLoading}
                   error={fighter2ChartError}
-                  gameMode={gameMode}
                 />
               </div>
 
               {/* Right Ad Banner */}
               <div className="col-span-3">
-                <div className="bg-black border-4 border-primary h-40 flex items-center justify-center pixel-border">
+                <div className="bg-black/50 border-2 border-primary h-40 flex items-center justify-center retro-container">
                   <p className="text-white text-sm pixel-pulse">AD SPACE</p>
                 </div>
               </div>
@@ -279,7 +270,7 @@ export default function Home() {
         )}
       </main>
       
-      {/* <Footer /> */}
+      <Footer />
     </div>
   );
 }

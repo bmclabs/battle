@@ -5,14 +5,12 @@ interface BattleArenaProps {
   fighter1: Fighter | null;
   fighter2: Fighter | null;
   gameMode: GameMode;
-  winner: string | null;
 }
 
 const BattleArena: React.FC<BattleArenaProps> = ({
   fighter1,
   fighter2,
-  gameMode,
-  winner
+  gameMode
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -39,7 +37,7 @@ const BattleArena: React.FC<BattleArenaProps> = ({
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full h-full bg-black border-4 border-primary relative overflow-hidden">
+    <div ref={containerRef} className="w-full h-full bg-black/80 border-2 border-primary relative overflow-hidden retro-container">
       {/* Iframe container with CRT effect */}
       <div className="absolute inset-0 crt-effect">
         <iframe
@@ -53,7 +51,7 @@ const BattleArena: React.FC<BattleArenaProps> = ({
       </div>
       
       {/* Game mode indicator overlay */}
-      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 bg-black/70 px-4 py-1 border-2 border-primary pixel-pulse">
+      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 bg-black/70 px-4 py-1 border border-primary pixel-pulse retro-container">
         <p className="text-white text-sm uppercase">
           {gameMode === GameMode.PREPARATION && "Preparation"}
           {gameMode === GameMode.BATTLE && "Battle in Progress"}

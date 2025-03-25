@@ -1,7 +1,6 @@
 'use client';
 
 import { WalletContextState } from '@solana/wallet-adapter-react';
-import { PublicKey } from '@solana/web3.js';
 
 // Use the browser's TextEncoder if available
 const textEncoder = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null;
@@ -42,7 +41,7 @@ interface UserResponse {
 
 // Get a challenge for the wallet address
 export const getChallenge = async (walletAddress: string): Promise<ChallengeResponse> => {
-  const response = await fetch(`${API_BASE_URL}/auth/challenge`, {
+  const response = await fetch(`${API_BASE_URL}/challenge`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -63,7 +62,7 @@ export const verifySignature = async (
   signature: string,
   challenge: string
 ): Promise<VerifyResponse> => {
-  const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+  const response = await fetch(`${API_BASE_URL}/verify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

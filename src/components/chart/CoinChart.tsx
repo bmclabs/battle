@@ -9,10 +9,12 @@ import {
   Title,
   Tooltip,
   Legend,
-  ChartOptions
+  ChartOptions,
+  ChartData as ChartJsData,
+  Chart
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { ChartData, Fighter, GameMode } from '../../types';
+import { ChartData, Fighter } from '../../types';
 
 // Register Chart.js components
 ChartJS.register(
@@ -26,34 +28,45 @@ ChartJS.register(
   Legend
 );
 
+// Define extended chart data type that includes OHLC data
+interface ExtendedChartData extends ChartJsData {
+  ohlc?: Array<{
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+  }>;
+}
+
 // Custom candlestick plugin
 const candlestickPlugin = {
   id: 'candlestick',
-  beforeDatasetsDraw(chart: any) {
-    const { ctx, data, chartArea, scales } = chart;
-    const { top, bottom, left, right, width, height } = chartArea;
+  beforeDatasetsDraw(chart: Chart) {
+    const { ctx, data, chartArea } = chart;
     
-    if (!data.ohlc) return;
+    const extendedData = data as ExtendedChartData;
+    if (!extendedData.ohlc) return;
     
     ctx.save();
     
-    data.ohlc.forEach((candle: any, i: number) => {
-      const x = scales.x.getPixelForValue(i);
-      const openY = scales.y.getPixelForValue(candle.open);
-      const highY = scales.y.getPixelForValue(candle.high);
-      const lowY = scales.y.getPixelForValue(candle.low);
-      const closeY = scales.y.getPixelForValue(candle.close);
+    const ohlcData = extendedData.ohlc;
+    ohlcData.forEach((candle, i: number) => {
+      const x = chart.scales.x.getPixelForValue(i);
+      const openY = chart.scales.y.getPixelForValue(candle.open);
+      const highY = chart.scales.y.getPixelForValue(candle.high);
+      const lowY = chart.scales.y.getPixelForValue(candle.low);
+      const closeY = chart.scales.y.getPixelForValue(candle.close);
       
       // Draw candle body
-      const candleWidth = width / data.ohlc.length * 0.8;
+      const candleWidth = chartArea.width / ohlcData.length * 0.8;
       const halfCandleWidth = candleWidth / 2;
       
       // Determine if bullish or bearish
       const isBullish = closeY < openY;
       
       // Set color based on bullish/bearish
-      ctx.fillStyle = isBullish ? '#14F195' : '#FF4545';
-      ctx.strokeStyle = isBullish ? '#14F195' : '#FF4545';
+      ctx.fillStyle = isBullish ? '#14F195' : '#FF69B4';
+      ctx.strokeStyle = isBullish ? '#14F195' : '#FF69B4';
       
       // Draw candle body
       ctx.fillRect(x - halfCandleWidth, openY, candleWidth, closeY - openY);
@@ -76,17 +89,15 @@ interface CoinChartProps {
   chartData: ChartData | null;
   loading: boolean;
   error: string | null;
-  gameMode: GameMode;
 }
 
 const CoinChart: React.FC<CoinChartProps> = ({
   fighter,
   chartData,
   loading,
-  error,
-  gameMode
+  error
 }) => {
-  // Only show in preparation mode
+  // Only show if fighter exists
   if (!fighter) {
     return null;
   }
@@ -176,7 +187,7 @@ const CoinChart: React.FC<CoinChartProps> = ({
       },
       tooltip: {
         backgroundColor: '#000000',
-        borderColor: fighter.id === 'pepe' ? '#9945FF' : '#14F195',
+        borderColor: fighter.id === 'pepe' ? '#FF69B4' : '#14F195',
         borderWidth: 2,
         titleFont: {
           family: '"Press Start 2P", cursive',
@@ -187,7 +198,7 @@ const CoinChart: React.FC<CoinChartProps> = ({
           size: 10
         },
         callbacks: {
-          label: function(context: any) {
+          label: function(context: {parsed: {y: number}}) {
             const value = context.parsed.y;
             
             // Format the price using the same exponent notation
@@ -316,7 +327,7 @@ const CoinChart: React.FC<CoinChartProps> = ({
   };
 
   return (
-    <div className="w-full h-40 bg-black border-4 border-primary p-4 pixel-border">
+    <div className="w-full h-40 bg-black/80 border-2 border-primary p-4 retro-container">
       {loading ? (
         <div className="flex items-center justify-center h-full">
           <p className="text-white text-sm pixel-glitch">Loading chart data...</p>

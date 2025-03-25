@@ -1,4 +1,4 @@
-import { Bet, ChatMessage, Fighter, Match } from "../types";
+import { Bet, ChatMessage, Match } from "../types";
 
 // API base URL
 const API_BASE_URL = '/api';

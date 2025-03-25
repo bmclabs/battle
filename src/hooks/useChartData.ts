@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChartData, CoinMarketData } from '../types';
+import { ChartData } from '../types';
 
 // Map fighter IDs to CoinMarketCap IDs
 const COIN_ID_MAP: Record<string, { id: number, symbol: string }> = {
@@ -28,44 +28,6 @@ const getRandomDayInLastMonth = (): { start: Date, end: Date } => {
   endDate.setMinutes(0, 0, 0);
   
   return { start: startDate, end: endDate };
-};
-
-// Helper function to generate evenly spaced timestamps within a 24-hour period
-const generateTimestampsInDay = (start: Date, end: Date, count: number): Date[] => {
-  const result: Date[] = [];
-  const startTime = start.getTime();
-  const timeRange = end.getTime() - startTime;
-  
-  // Create evenly spaced intervals
-  for (let i = 0; i < count; i++) {
-    const time = new Date(startTime + (timeRange * i / (count - 1)));
-    result.push(time);
-  }
-  
-  return result;
-};
-
-// Helper function to find the closest price data point to a given timestamp
-const findClosestPrice = (quotes: any[], targetTime: number): number => {
-  if (!quotes || quotes.length === 0) {
-    throw new Error('No quotes available');
-  }
-  
-  // Find the quote with the closest timestamp to the target time
-  let closestQuote = quotes[0];
-  let closestDistance = Math.abs(new Date(closestQuote.timestamp).getTime() - targetTime);
-  
-  for (let i = 1; i < quotes.length; i++) {
-    const quote = quotes[i];
-    const distance = Math.abs(new Date(quote.timestamp).getTime() - targetTime);
-    
-    if (distance < closestDistance) {
-      closestQuote = quote;
-      closestDistance = distance;
-    }
-  }
-  
-  return closestQuote.quote.USD.price;
 };
 
 export const useChartData = (fighterId: string) => {
@@ -142,13 +104,13 @@ export const useChartData = (fighterId: string) => {
         }
 
         // Sort quotes by timestamp to ensure they're in chronological order
-        quotes.sort((a: any, b: any) => {
+        quotes.sort((a: {timestamp: string}, b: {timestamp: string}) => {
           return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
         });
 
         // Process the historical data
-        let timestamps: Date[] = [];
-        let prices: number[] = [];
+        const timestamps: Date[] = [];
+        const prices: number[] = [];
         
         if (quotes.length >= 8) {
           // If we have enough data points, select 8 evenly spaced points
@@ -161,7 +123,7 @@ export const useChartData = (fighterId: string) => {
           }
         } else if (quotes.length > 0) {
           // If we have some data but not enough, use what we have
-          quotes.forEach((quote: any) => {
+          quotes.forEach((quote: {timestamp: string; quote: {USD: {price: number}}}) => {
             timestamps.push(new Date(quote.timestamp));
             prices.push(quote.quote.USD.price);
           });
@@ -188,8 +150,8 @@ export const useChartData = (fighterId: string) => {
             {
               label: symbol,
               data: prices,
-              borderColor: fighterId === 'pepe' ? '#9945FF' : '#14F195',
-              backgroundColor: fighterId === 'pepe' ? 'rgba(153, 69, 255, 0.2)' : 'rgba(20, 241, 149, 0.2)',
+              borderColor: fighterId === 'pepe' ? '#FF69B4' : '#14F195',
+              backgroundColor: fighterId === 'pepe' ? 'rgba(255, 105, 180, 0.2)' : 'rgba(20, 241, 149, 0.2)',
             },
           ],
           marketData: marketData,
