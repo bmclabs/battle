@@ -6,7 +6,7 @@ import { WalletContextState } from '@solana/wallet-adapter-react';
 const textEncoder = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null;
 
 // API base URL from environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL + '/v1/auth';
 
 // Interface for the challenge response
 interface ChallengeResponse {
@@ -79,7 +79,7 @@ export const verifySignature = async (
 
 // Get the current user
 export const getCurrentUser = async (token: string): Promise<UserResponse> => {
-  const response = await fetch(`${API_BASE_URL}/auth/user`, {
+  const response = await fetch(`${API_BASE_URL}/user`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ export const getCurrentUser = async (token: string): Promise<UserResponse> => {
 
 // Logout
 export const logout = async (token: string): Promise<{ success: boolean }> => {
-  const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+  const response = await fetch(`${API_BASE_URL}/logout`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

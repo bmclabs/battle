@@ -41,7 +41,7 @@ const Header: React.FC<HeaderProps> = ({
             <Image
               src="/logo/bmc-logo.gif"
               alt="Battle Memecoin Club"
-              width={160}
+              width={140}
               height={60}
               className="object-contain"
             />

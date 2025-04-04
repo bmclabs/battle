@@ -258,14 +258,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            
-            {/* Game Mode Switcher (for demo purposes) */}
-            <div className="mt-4">
-              <GameModeSwitcher
-                currentMode={gameMode}
-                onModeChange={handleGameModeChange}
-              />
-            </div>
           </div>
         )}
       </main>

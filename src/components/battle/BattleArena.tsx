@@ -39,7 +39,7 @@ const BattleArena: React.FC<BattleArenaProps> = ({
   return (
     <div ref={containerRef} className="w-full h-full bg-black/80 border-2 border-primary relative overflow-hidden retro-container">
       {/* Iframe container with CRT effect */}
-      <div className="absolute inset-0 crt-effect">
+      {/* <div className="absolute inset-0 crt-effect">
         <iframe
           ref={iframeRef}
           src="https://battle-memecoin-club.vercel.app"
@@ -48,11 +48,11 @@ const BattleArena: React.FC<BattleArenaProps> = ({
           allowFullScreen
           style={{ display: 'block' }}
         />
-      </div>
+      </div> */}
       
       {/* Game mode indicator overlay */}
-      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 bg-black/70 px-4 py-1 border border-primary pixel-pulse retro-container">
-        <p className="text-white text-sm uppercase">
+      <div className="absolute top-0.5 left-1/2 transform -translate-x-1/2 z-20 bg-black/50 px-4 py-1 border border-primary retro-container">
+        <p className="text-white text-[8px] uppercase">
           {gameMode === GameMode.PREPARATION && "Preparation"}
           {gameMode === GameMode.BATTLE && "Battle in Progress"}
           {gameMode === GameMode.RESULT && "Match Complete"}

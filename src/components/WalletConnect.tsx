@@ -39,17 +39,17 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
           <div className="flex gap-2 bg-black/70 px-4 py-2 border border-primary rounded retro-container">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-              <span className="text-white text-xs">
+              <span className="text-white text-[10px]">
                 {user?.username ? `${user.username} | ` : ''}{formatWalletAddress(walletAddress)} |
               </span>
             </div>
-            <div className="text-secondary text-xs">
+            <div className="text-secondary text-[10px]">
              {formatSolAmount(balance)} <span className="text-primary">SOL</span>
             </div>
           </div>
           <Button 
             variant="danger" 
-            size="xs" 
+            size="sm" 
             onClick={onDisconnect}
           >
             DISCONNECT
@@ -58,11 +58,10 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
       ) : (
         <Button
           variant="primary"
-          size="xs"
+          size="sm"
           onClick={onConnect}
           disabled={connecting}
           isLoading={connecting}
-          className="pixel-pulse"
         >
           CONNECT WALLET
         </Button>
