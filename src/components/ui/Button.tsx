@@ -27,7 +27,7 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   // State to track hover/active state
   const [isHovered, setIsHovered] = useState(false);
-  
+
   // CSS Variables
   const colors = {
     primary: '#14F195',
@@ -41,7 +41,13 @@ const Button: React.FC<ButtonProps> = ({
   };
   
   const getHoverBackgroundColor = () => {
-    return variant === 'secondary' ? colors.primary : colors.secondary;
+    if (variant === 'dark') {
+      return colors.primary;
+    } else if (variant === 'secondary') {
+      return colors.primary;
+    } else {
+      return colors.secondary;
+    }
   };
   
   const getTextColor = () => {

@@ -8,7 +8,6 @@ import ChatRoom from '../components/chat/ChatRoom';
 import BettingPanel from '../components/betting/BettingPanel';
 import BetsList from '../components/betting/BetsList';
 import CoinChart from '../components/chart/CoinChart';
-import GameModeSwitcher from '../components/GameModeSwitcher';
 import SignMessageModal from '../components/SignMessageModal';
 import { useMatch } from '../hooks/useMatch';
 import { useBetting } from '../hooks/useBetting';
@@ -17,6 +16,8 @@ import { useChartData as useChartDataHook } from '../hooks/useChartData';
 import { useWallet } from '../hooks/useWallet';
 import { initializeSocket, disconnectSocket } from '../services/socket';
 import { GameMode } from '../types';
+import BetPaused from '@/components/betting/BetPaused';
+import ChartPaused from '@/components/chart/ChartPaused';
 
 export default function Home() {
   // Initialize socket connection
@@ -65,13 +66,13 @@ export default function Home() {
     chartData: fighter1ChartData, 
     loading: fighter1ChartLoading,
     error: fighter1ChartError
-  } = useChartDataHook(match?.fighter1?.id || '');
+  } = useChartDataHook(match?.fighter1?.id || '', match?.id);
 
   const { 
     chartData: fighter2ChartData, 
     loading: fighter2ChartLoading,
     error: fighter2ChartError
-  } = useChartDataHook(match?.fighter2?.id || '');
+  } = useChartDataHook(match?.fighter2?.id || '', match?.id);
 
   // Handle placing a bet
   const handlePlaceBet = async (fighterId: string, amount: number) => {
@@ -199,6 +200,12 @@ export default function Home() {
                     />
                   </div>
                 )}
+
+                {(gameMode === GameMode.COMPLETED || gameMode === GameMode.REFUND || gameMode === GameMode.PAUSED) && (
+                  <div className="h-full">
+                    <BetPaused />
+                  </div>
+                )}
               </div>
               
               {/* Battle Arena (center) */}
@@ -228,33 +235,45 @@ export default function Home() {
               {/* Left Ad Banner */}
               <div className="col-span-3">
                 <div className="bg-black/50 border-2 border-primary h-40 flex items-center justify-center retro-container">
-                  <p className="text-white text-sm pixel-pulse">AD SPACE</p>
+                  <p className="text-white/70 text-sm pixel-pulse">SPACE AVAILABLE</p>
                 </div>
               </div>
 
               {/* Charts Section */}
               <div className="col-span-6 grid grid-cols-2 gap-4">
+                {(gameMode === GameMode.COMPLETED || gameMode === GameMode.REFUND || gameMode === GameMode.PAUSED) && (
+                    <ChartPaused />
+                )}
+
+                {(gameMode === GameMode.COMPLETED || gameMode === GameMode.REFUND || gameMode === GameMode.PAUSED) && (
+                    <ChartPaused />
+                )}
+                
                 {/* Fighter 1 Chart */}
-                <CoinChart
-                  fighter={match?.fighter1 || null}
-                  chartData={fighter1ChartData}
-                  loading={fighter1ChartLoading}
-                  error={fighter1ChartError}
-                />
+                {gameMode !== GameMode.PAUSED && (
+                  <CoinChart
+                    fighter={match?.fighter1 || null}
+                    chartData={fighter1ChartData}
+                    loading={fighter1ChartLoading}
+                    error={fighter1ChartError}
+                  />
+                )}
                 
                 {/* Fighter 2 Chart */}
-                <CoinChart
-                  fighter={match?.fighter2 || null}
-                  chartData={fighter2ChartData}
-                  loading={fighter2ChartLoading}
-                  error={fighter2ChartError}
-                />
+                {gameMode !== GameMode.PAUSED && (
+                  <CoinChart
+                    fighter={match?.fighter2 || null}
+                    chartData={fighter2ChartData}
+                    loading={fighter2ChartLoading}
+                    error={fighter2ChartError}
+                  />
+                )}   
               </div>
 
               {/* Right Ad Banner */}
               <div className="col-span-3">
                 <div className="bg-black/50 border-2 border-primary h-40 flex items-center justify-center retro-container">
-                  <p className="text-white text-sm pixel-pulse">AD SPACE</p>
+                  <p className="text-white/70 text-sm pixel-pulse">SPACE AVAILABLE</p>
                 </div>
               </div>
             </div>

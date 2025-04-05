@@ -1,33 +1,7 @@
-import { Bet, ChatMessage, Match } from "../types";
+import { Bet, ChatMessage } from "../types";
 
 // API base URL
 const API_BASE_URL = '/api';
-
-// Fetch current match data
-export const fetchCurrentMatch = async (): Promise<Match> => {
-  const response = await fetch(`${API_BASE_URL}/match`);
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch match data');
-  }
-  
-  return response.json();
-};
-
-// Fetch chart data for a specific fighter
-export const fetchFighterChartData = async (fighterId: string): Promise<{ labels: string[], data: number[] }> => {
-  if (!fighterId) {
-    return { labels: [], data: [] };
-  }
-  
-  const response = await fetch(`${API_BASE_URL}/chart/${fighterId}`);
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch chart data');
-  }
-  
-  return response.json();
-};
 
 // Place a bet
 export const placeBet = async (walletAddress: string, amount: number, fighterId: string): Promise<Bet> => {

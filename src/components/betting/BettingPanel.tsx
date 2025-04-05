@@ -3,6 +3,16 @@ import { Fighter, GameMode } from '../../types';
 import { formatSolAmount } from '../../utils';
 import Button from '../ui/Button';
 
+// Fighter color map based on chart colors
+const FIGHTER_COLORS: Record<string, { border: string, background: string }> = {
+  doge: { border: '#BA9F33', background: 'rgba(186, 159, 51, 0.8)' },
+  shiba: { border: '#F3A62F', background: 'rgba(243, 166, 47, 0.8)' },
+  pepe: { border: '#4C9641', background: 'rgba(76, 150, 65, 0.8)' },
+  pengu: { border: '#8CB3FE', background: 'rgba(140, 179, 254, 0.8)' },
+  trump: { border: '#EAD793', background: 'rgba(234, 215, 147, 0.8)' },
+  brett: { border: '#00ACDC', background: 'rgba(0, 172, 220, 0.8)' }
+};
+
 interface BettingPanelProps {
   fighter1: Fighter | null;
   fighter2: Fighter | null;
@@ -32,6 +42,15 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
   if (gameMode !== GameMode.PREPARATION || !fighter1 || !fighter2) {
     return null;
   }
+
+  // Get fighter colors
+  const getFighterColors = (fighterId: string) => {
+    const lowerFighterId = fighterId.toLowerCase();
+    return FIGHTER_COLORS[lowerFighterId] || { border: '#6C757D', background: 'rgba(108, 117, 125, 0.2)' };
+  };
+
+  const fighter1Colors = getFighterColors(fighter1.id);
+  const fighter2Colors = getFighterColors(fighter2.id);
 
   const handleSelectFighter = (fighterId: string) => {
     if (!walletConnected || isSubmitting) return;
@@ -100,23 +119,41 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
       
       {/* Fighter selection */}
       <div className="grid grid-cols-2 gap-2 mb-2">
-        <Button
+        <button
           onClick={() => handleSelectFighter(fighter1.id)}
-          variant={selectedFighter === fighter1.id ? 'secondary' : 'dark'}
-          size="xs"
+          className={`
+            py-2 px-3 
+            ${selectedFighter === fighter1.id ? 'font-bold' : 'font-normal'}
+            cursor-pointer
+            text-white text-sm
+            border-2 transition-all rounded-md
+          `}
+          style={{
+            borderColor: fighter1Colors.border,
+            backgroundColor: selectedFighter === fighter1.id ? fighter1Colors.background : 'transparent',
+          }}
           disabled={!walletConnected || isSubmitting}
         >
           {fighter1.name}
-        </Button>
+        </button>
         
-        <Button
+        <button
           onClick={() => handleSelectFighter(fighter2.id)}
-          variant={selectedFighter === fighter2.id ? 'secondary' : 'dark'}
-          size="xs"
+          className={`
+            py-2 px-3 
+            ${selectedFighter === fighter2.id ? 'font-bold' : 'font-normal'}
+            cursor-pointer
+            text-white text-sm
+            border-2 transition-all rounded-md
+          `}
+          style={{
+            borderColor: fighter2Colors.border,
+            backgroundColor: selectedFighter === fighter2.id ? fighter2Colors.background : 'transparent',
+          }}
           disabled={!walletConnected || isSubmitting}
         >
           {fighter2.name}
-        </Button>
+        </button>
       </div>
       
       {/* Bet amount input */}
@@ -161,9 +198,9 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
               onClick={() => walletConnected && !isSubmitting && handleSelectBetAmount(amount)}
               className={`
                 text-xs py-1 px-1 
-                ${parseFloat(betAmount) === amount ? 'bg-secondary text-white' : 'bg-black/50 text-gray-300'} 
+                ${parseFloat(betAmount) === amount ? 'bg-[#14F195] text-black' : 'bg-black/50 text-gray-300'} 
                 border border-primary
-                ${!walletConnected || isSubmitting || amount > walletBalance ? 'opacity-50 cursor-not-allowed' : ''}
+                ${!walletConnected || isSubmitting || amount > walletBalance ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#14F195]'}
               `}
               disabled={!walletConnected || isSubmitting || amount > walletBalance}
             >

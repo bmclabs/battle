@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchCurrentMatch } from '../services/api';
+import { fetchCurrentMatch } from '../services/match';
 import { subscribeToMatchUpdates, subscribeToGameModeChanges, subscribeToMatchResults } from '../services/socket';
 import { GameMode, Match } from '../types';
 
@@ -13,10 +13,22 @@ export const useMatch = () => {
     const loadMatch = async () => {
       try {
         setLoading(true);
-        const matchData = await fetchCurrentMatch();
-        setMatch(matchData);
-        setGameMode(matchData.status as GameMode);
-        setError(null);
+        
+        try {
+          // Try to fetch the current match from the API
+          const matchData = await fetchCurrentMatch();
+          setMatch(matchData);
+          setGameMode(matchData.status);
+          setError(null);
+        } catch (fetchError) {
+          // If no active match found, use a default match
+          if (fetchError instanceof Error && fetchError.message === 'No active match found') {
+            // TODO: Implement wording on the UI, ensure the component like panel is showing just with the text "No active match found"
+          } else {
+            // Handle other errors
+            throw fetchError;
+          }
+        }
       } catch (err) {
         setError('Failed to load match data');
         console.error(err);
@@ -26,32 +38,6 @@ export const useMatch = () => {
     };
 
     loadMatch();
-
-    // Subscribe to real-time updates
-    subscribeToMatchUpdates((updatedMatch) => {
-      setMatch(updatedMatch);
-    });
-
-    subscribeToGameModeChanges((mode) => {
-      setGameMode(mode);
-    });
-
-    subscribeToMatchResults((result) => {
-      setMatch((prevMatch) => {
-        if (!prevMatch) return null;
-        return {
-          ...prevMatch,
-          winner: result.winnerId,
-          status: GameMode.RESULT,
-          endTime: Date.now()
-        };
-      });
-      setGameMode(GameMode.RESULT);
-    });
-
-    return () => {
-      // Cleanup would happen here if needed
-    };
   }, []);
 
   return { match, loading, error, gameMode, setGameMode };

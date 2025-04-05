@@ -1,8 +1,11 @@
 // Game state types
 export enum GameMode {
+  SEARCHING = 'searching',
   PREPARATION = 'preparation',
   BATTLE = 'battle',
-  RESULT = 'result'
+  COMPLETED = 'completed',
+  REFUND = 'refund',
+  PAUSED = 'paused'
 }
 
 export interface Fighter {

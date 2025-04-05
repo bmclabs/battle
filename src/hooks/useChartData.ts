@@ -1,181 +1,124 @@
 import { useState, useEffect } from 'react';
 import { ChartData } from '../types';
+import { 
+  fetchFighterPrices, 
+  transformFighterPriceDataToChartData, 
+  generateFallbackChartData,
+  PriceInterval 
+} from '../services/chart';
 
-// Map fighter IDs to CoinMarketCap IDs
-const COIN_ID_MAP: Record<string, { id: number, symbol: string }> = {
-  'pepe': { id: 24478, symbol: 'PEPE' },
-  'doge': { id: 74, symbol: 'DOGE' },
-};
-
-// Helper function to get a random 24-hour period from the past month
-const getRandomDayInLastMonth = (): { start: Date, end: Date } => {
-  const now = new Date();
-  const oneMonthAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-  
-  // Get a random time between one month ago and 1 day ago
-  const minTime = oneMonthAgo.getTime();
-  const maxTime = now.getTime() - (24 * 60 * 60 * 1000); // Subtract 1 day from now
-  
-  // Generate random timestamp between minTime and maxTime
-  const randomTime = minTime + Math.random() * (maxTime - minTime);
-  
-  // Create start and end dates for the 24-hour period
-  const startDate = new Date(randomTime);
-  const endDate = new Date(randomTime + (24 * 60 * 60 * 1000)); // Add 24 hours
-  
-  // Round to nearest hour for cleaner timestamps
-  startDate.setMinutes(0, 0, 0);
-  endDate.setMinutes(0, 0, 0);
-  
-  return { start: startDate, end: endDate };
-};
-
-export const useChartData = (fighterId: string) => {
+export const useChartData = (fighterId: string, matchId?: string) => {
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [usedFallback, setUsedFallback] = useState<boolean>(false);
 
   useEffect(() => {
     const loadChartData = async () => {
-      if (!fighterId || !COIN_ID_MAP[fighterId]) return;
+      if (!fighterId) {
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
         setError(null);
+        setUsedFallback(false);
         
-        // Get coin info from map
-        const { symbol } = COIN_ID_MAP[fighterId];
-        
-        // Get a random 24-hour period from the past month
-        const { start, end } = getRandomDayInLastMonth();
-        console.log(`Selected time period: ${start.toISOString()} to ${end.toISOString()}`);
-        
-        // Fetch both current market data and historical data for the specific 24-hour period
-        const [marketResponse, historicalResponse] = await Promise.all([
-          fetch(`/api/chart/${fighterId}/market?symbol=${symbol}`),
-          fetch(`/api/chart/${fighterId}/historical?symbol=${symbol}&start=${start.toISOString()}&end=${end.toISOString()}&interval=1h`)
-        ]);
-        
-        if (!marketResponse.ok || !historicalResponse.ok) {
-          const [marketData, historicalData] = await Promise.all([
-            marketResponse.json().catch(() => ({ error: marketResponse.statusText })),
-            historicalResponse.json().catch(() => ({ error: historicalResponse.statusText }))
-          ]);
+        // Only try to fetch from API if we have a match ID
+        if (matchId) {
+          console.log(`Fetching chart data for fighter: ${fighterId}, match: ${matchId}`);
           
-          const errors = [];
-          if (!marketResponse.ok) {
-            errors.push(`Market data: ${marketData.error || marketResponse.statusText}`);
-          }
-          if (!historicalResponse.ok) {
-            errors.push(`Historical data: ${historicalData.error || historicalResponse.statusText}`);
-          }
+          const interval: PriceInterval = '1h';
+          const count = 24; // Default to 24 data points for a day
           
-          throw new Error(`Failed to fetch data: ${errors.join(', ')}`);
-        }
-        
-        const [marketData, historicalData] = await Promise.all([
-          marketResponse.json(),
-          historicalResponse.json()
-        ]);
-
-        // Validate the data structure
-        if (!marketData.price || !marketData.marketCap || !marketData.volume24h || marketData.percentChange24h === undefined) {
-          throw new Error('Invalid market data format');
-        }
-
-        // Check if historical data exists and has the expected structure
-        if (!historicalData.data || !historicalData.data.quotes) {
-          console.warn('Historical data missing or invalid format:', historicalData);
-          throw new Error('Invalid historical data format');
-        }
-        
-        // Ensure quotes is an array (even if empty)
-        const quotes = Array.isArray(historicalData.data.quotes) ? historicalData.data.quotes : [];
-        
-        // Log the quotes for debugging
-        console.log(`Received ${quotes.length} historical data points`);
-        if (quotes.length > 0) {
-          console.log('Sample quote:', quotes[0]);
-        }
-        
-        // If no historical data is available, we'll use current price for all data points
-        if (quotes.length === 0) {
-          console.warn('No historical quotes available, using current price for all data points');
-        }
-
-        // Sort quotes by timestamp to ensure they're in chronological order
-        quotes.sort((a: {timestamp: string}, b: {timestamp: string}) => {
-          return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-        });
-
-        // Process the historical data
-        const timestamps: Date[] = [];
-        const prices: number[] = [];
-        
-        if (quotes.length >= 8) {
-          // If we have enough data points, select 8 evenly spaced points
-          const step = Math.floor(quotes.length / 8);
-          for (let i = 0; i < 8; i++) {
-            const index = Math.min(i * step, quotes.length - 1);
-            const quote = quotes[index];
-            timestamps.push(new Date(quote.timestamp));
-            prices.push(quote.quote.USD.price);
-          }
-        } else if (quotes.length > 0) {
-          // If we have some data but not enough, use what we have
-          quotes.forEach((quote: {timestamp: string; quote: {USD: {price: number}}}) => {
-            timestamps.push(new Date(quote.timestamp));
-            prices.push(quote.quote.USD.price);
-          });
-        } else {
-          // If we have no data, generate evenly spaced timestamps and use current price
-          const timeStep = (end.getTime() - start.getTime()) / 7;
-          for (let i = 0; i < 8; i++) {
-            timestamps.push(new Date(start.getTime() + i * timeStep));
-            prices.push(marketData.price);
+          try {
+            // Fetch price data using our service with the provided match ID
+            const priceData = await fetchFighterPrices(matchId, interval, count);
+            
+            if (!priceData.historicalData || priceData.historicalData.length === 0) {
+              throw new Error('No historical data available for this match');
+            }
+            
+            console.log(`Retrieved data for fighters: ${priceData.historicalData.map(f => f.fighter).join(', ')}`);
+            
+            // Check if our fighter exists in the data (case insensitive)
+            const upperFighterId = fighterId.toUpperCase();
+            const fighterExists = priceData.historicalData.some(f => f.fighter === upperFighterId);
+            
+            if (!fighterExists) {
+              console.warn(`Fighter ${upperFighterId} not found in data. Available fighters: ${priceData.historicalData.map(f => f.fighter).join(', ')}`);
+            }
+            
+            // Transform the data for chart display
+            const formattedChartData = transformFighterPriceDataToChartData(priceData, fighterId);
+            
+            // If we have valid data
+            if (formattedChartData.datasets.length > 0) {
+              // Find the fighter data
+              const fighterData = priceData.historicalData.find(f => 
+                f.fighter.toLowerCase() === fighterId.toLowerCase() ||
+                f.fighter === fighterId.toUpperCase()
+              );
+              
+              // If we have quotes
+              if (fighterData && fighterData.quotes.length > 0) {
+                // Extract timeRange information
+                const quotes = fighterData.quotes;
+                const timeRange = {
+                  start: quotes[0].timestamp,
+                  end: quotes[quotes.length - 1].timestamp
+                };
+                
+                // Set the chart data with time range
+                setChartData({
+                  ...formattedChartData,
+                  timeRange
+                });
+                
+                setError(null);
+                return; // Exit early on success
+              } 
+            }
+            // If we reach here, we couldn't find the right fighter data, fall through to the fallback
+            throw new Error(`No valid data found for fighter ${fighterId}`);
+          } catch (apiError) {
+            // Log the error but use fallback data instead of failing
+            console.warn('API error, using fallback data:', apiError);
+            throw apiError; // Re-throw to trigger fallback
           }
         }
-
-        // Log the data we're using for the chart
-        console.log('Chart timestamps:', timestamps.map(t => t.toISOString()));
-        console.log('Chart prices:', prices);
         
-        // Format data for chart
-        const formattedData: ChartData = {
-          labels: timestamps.map(timestamp => {
-            // Format as "MM/DD HH:MM" for 24-hour period
-            return `${(timestamp.getUTCMonth() + 1).toString().padStart(2, '0')}/${timestamp.getUTCDate().toString().padStart(2, '0')} ${timestamp.getUTCHours().toString().padStart(2, '0')}:00`;
-          }),
-          datasets: [
-            {
-              label: symbol,
-              data: prices,
-              borderColor: fighterId === 'pepe' ? '#FF69B4' : '#14F195',
-              backgroundColor: fighterId === 'pepe' ? 'rgba(255, 105, 180, 0.2)' : 'rgba(20, 241, 149, 0.2)',
-            },
-          ],
-          marketData: marketData,
-          // Add time range information for display
-          timeRange: {
-            start: start.toISOString(),
-            end: end.toISOString()
-          }
+        // If we don't have a match ID or the API call failed, throw to trigger fallback
+        throw new Error('Using fallback data');
+        
+      } catch (err) {
+        // Use fallback data instead of showing an error
+        console.log('Using fallback chart data for', fighterId);
+        const fallbackData = generateFallbackChartData(fighterId);
+        
+        // Add a time range for the last 24 hours
+        const now = new Date();
+        const timeRange = {
+          start: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+          end: now.toISOString()
         };
         
-        setChartData(formattedData);
+        setChartData({
+          ...fallbackData,
+          timeRange
+        });
+        
+        // We're using fallback data, but don't show an error to the user
+        setUsedFallback(true);
         setError(null);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load chart data';
-        console.error('Chart data error:', err);
-        setError(errorMessage);
-        setChartData(null);
       } finally {
         setLoading(false);
       }
     };
 
     loadChartData();
-  }, [fighterId]);
+  }, [fighterId, matchId]); 
 
-  return { chartData, loading, error };
+  return { chartData, loading, error, usedFallback };
 }; 

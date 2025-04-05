@@ -330,15 +330,15 @@ const CoinChart: React.FC<CoinChartProps> = ({
     <div className="w-full h-40 bg-black/80 border-2 border-primary p-4 retro-container">
       {loading ? (
         <div className="flex items-center justify-center h-full">
-          <p className="text-white text-sm pixel-glitch">Loading chart data...</p>
+          <p className="text-white text-xs">Loading chart data...</p>
         </div>
       ) : error ? (
         <div className="flex items-center justify-center h-full">
-          <p className="text-red-500 text-sm pixel-glitch">{error}</p>
+          <p className="text-red-500 text-xs">{error}</p>
         </div>
       ) : !chartData ? (
         <div className="flex items-center justify-center h-full">
-          <p className="text-white text-sm">No chart data available</p>
+          <p className="text-white text-xs">No chart data available</p>
         </div>
       ) : (
         <div className="h-full flex flex-col">

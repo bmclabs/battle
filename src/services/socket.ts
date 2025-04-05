@@ -19,7 +19,7 @@ let socket: Socket | null = null;
 export const initializeSocket = (): Socket => {
   if (!socket) {
     // In production, this would be your actual WebSocket server URL
-    socket = io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:3001');
+    socket = io(process.env.NEXT_PUBLIC_API_URL);
     
     // Log connection status
     socket.on(SocketEvents.CONNECT, () => {
