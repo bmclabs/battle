@@ -124,7 +124,7 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
           className={`
             py-2 px-3 
             ${selectedFighter === fighter1.id ? 'font-bold' : 'font-normal'}
-            cursor-pointer
+            ${!walletConnected || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#14F195]'}
             text-white text-sm
             border-2 transition-all rounded-md
           `}
@@ -142,7 +142,7 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
           className={`
             py-2 px-3 
             ${selectedFighter === fighter2.id ? 'font-bold' : 'font-normal'}
-            cursor-pointer
+            ${!walletConnected || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#14F195]'}
             text-white text-sm
             border-2 transition-all rounded-md
           `}
@@ -167,7 +167,7 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
             value={betAmount}
             onChange={handleBetAmountChange}
             placeholder="0.00"
-            className="retro-input flex-1 min-w-0"
+            className={`retro-input flex-1 min-w-0 ${!walletConnected || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#14F195]'}`}
             disabled={!walletConnected || isSubmitting}
           />
           <Button
@@ -220,6 +220,13 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
       >
         PLACE BET
       </Button>
+      
+      {/* Transaction in progress warning */}
+      {isSubmitting && (
+        <div className="mt-2 text-yellow-500 text-xs text-center px-2 py-1 bg-yellow-900/30 border border-yellow-500/50 rounded">
+          <span className="font-bold">⚠️ IMPORTANT:</span> Please do not refresh or close this page during the transaction process.
+        </div>
+      )}
       
       {/* Error message */}
       {error && (

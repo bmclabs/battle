@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { getMatchActiveBets, placeBet, getUserCurrentBet } from '../services/bet';
 import { placeBetOnChain } from '../services/anchor';
 import { subscribeToNewBets } from '../services/socket';
-import { useWallet } from './useWallet';
-import { Bet, BetSignature, MatchBettingSummary } from '../types';
-import { WalletContextState } from '@solana/wallet-adapter-react';
+import { Bet, BetSignature, MatchBettingSummary, GameMode } from '../types';
+import { useWalletAuth } from '@/lib/context/WalletContext';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { getAuthToken, isAuthenticated } from '@/lib/services/auth';
 
 // Map UserBet to Bet type
 const mapUserBetsToBets = (userBets: any[]): Bet[] => {
@@ -22,40 +23,78 @@ const mapUserBetsToBets = (userBets: any[]): Bet[] => {
   }));
 };
 
-export const useBetting = (matchId: string) => {
+interface UseBettingProps {
+  matchId: string;
+  gameMode?: GameMode;
+}
+
+export const useBetting = ({ matchId, gameMode }: UseBettingProps) => {
   const [matchBets, setMatchBets] = useState<MatchBettingSummary | null>(null);
   const [userBets, setUserBets] = useState<Bet[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [placingBet, setPlacingBet] = useState<boolean>(false);
-  const { user } = useWallet();
+  
+  const { user, isAuthenticated: userIsAuthenticated, connected } = useWalletAuth();
+  const wallet = useWallet();
 
-  // Load active bets for the match
+  // Load user's current bet when user is authenticated or page refreshes
   useEffect(() => {
-    if (!matchId || matchId === '') {
-      console.warn('No valid matchId provided for betting');
-      setLoading(false);
+    if (!matchId || matchId === '' || !user?.id) {
+      // Clear bets when user ID is not available
+      setUserBets([]);
       return;
     }
 
-    const loadBets = async () => {
+    const loadUserBets = async () => {
+      // Make sure user is authenticated and has a token
+      const hasToken = isAuthenticated();
+      if (!hasToken) {
+        setUserBets([]);
+        return;
+      }
+
+      try {
+        console.log('Loading user bets for match:', matchId);
+        const userBetsData = await getUserCurrentBet(user.id, matchId, connected);
+        setUserBets(mapUserBetsToBets(userBetsData));
+      } catch (userBetError) {
+        console.error('Failed to load user bets:', userBetError);
+        
+        // If error is auth-related, clear user bets
+        if (userBetError instanceof Error && 
+            (userBetError.message.includes('Authentication token is required') || 
+             userBetError.message.includes('401'))) {
+          setUserBets([]);
+        }
+      }
+    };
+
+    // Load user bets when user is authenticated or connects
+    if (userIsAuthenticated && connected) {
+      loadUserBets();
+    } else {
+      // Clear bets when user disconnects
+      console.log('User disconnected or not authenticated, clearing user bets');
+      setUserBets([]);
+    }
+  }, [matchId, user?.id, userIsAuthenticated, connected]);
+
+  // Load match active bets - focus on gameMode changes (especially BATTLE)
+  useEffect(() => {
+    if (!matchId || matchId === '') {
+      console.warn('No valid matchId provided for betting');
+      return;
+    }
+
+    const loadMatchBets = async () => {
       try {
         setLoading(true);
         
         // Get match betting data
-        const matchBetsData = await getMatchActiveBets(matchId);
+        console.log('Loading active bets for match:', matchId);
+        const matchBetsData = await getMatchActiveBets(matchId, gameMode);
         setMatchBets(matchBetsData);
-        
-        // If user is authenticated, load their bets
-        if (user?.id) {
-          try {
-            const userBetsData = await getUserCurrentBet(user.id, matchId);
-            setUserBets(mapUserBetsToBets(userBetsData));
-          } catch (userBetError) {
-            console.error('Failed to load user bets:', userBetError);
-            // Don't set main error, just log it
-          }
-        }
         
         setError(null);
       } catch (err) {
@@ -67,17 +106,21 @@ export const useBetting = (matchId: string) => {
       }
     };
 
-    loadBets();
-  }, [matchId, user?.id, user?.wallet_address]);
+    loadMatchBets();
+  }, [matchId, gameMode]);
 
   // Place a bet - new flow: on-chain transaction first, then save to backend
   const submitBet = async (
     walletAddress: string, 
     amount: number, 
     fighterName: string,
-    wallet: WalletContextState,
     matchAccountPubkey: string
   ): Promise<Bet> => {
+    // Check if user is authenticated and has token
+    if (!userIsAuthenticated || !getAuthToken()) {
+      throw new Error('You must be authenticated to place a bet');
+    }
+    
     if (!user?.id) {
       throw new Error('User must be authenticated to place a bet');
     }

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { ChartData } from '../types';
+import { ChartData, CoinMarketData } from '../types';
 import { 
   fetchFighterPrices, 
   transformFighterPriceDataToChartData, 
   generateFallbackChartData,
   PriceInterval 
 } from '../services/chart';
+import { subscribeToChartData, ChartData as WebSocketChartData } from '../services/socket';
 
 export const useChartData = (fighterId: string, matchId?: string) => {
   const [chartData, setChartData] = useState<ChartData | null>(null);
@@ -13,6 +14,7 @@ export const useChartData = (fighterId: string, matchId?: string) => {
   const [error, setError] = useState<string | null>(null);
   const [usedFallback, setUsedFallback] = useState<boolean>(false);
 
+  // Initial load of chart data
   useEffect(() => {
     const loadChartData = async () => {
       if (!fighterId) {
@@ -119,6 +121,83 @@ export const useChartData = (fighterId: string, matchId?: string) => {
 
     loadChartData();
   }, [fighterId, matchId]); 
+
+  // Subscribe to real-time chart data updates
+  useEffect(() => {
+    if (!matchId || !fighterId) {
+      return;
+    }
+
+    // Subscribe to chart data updates
+    const unsubscribe = subscribeToChartData((wsChartData: WebSocketChartData) => {
+      console.log('Received chart data update:', wsChartData);
+      
+      // Only process if it's for the current match
+      if (wsChartData.matchId !== matchId) {
+        return;
+      }
+      
+      // Find data for our fighter
+      const fighterData = wsChartData.fighters.find(f => 
+        f.fighterName.toLowerCase() === fighterId.toLowerCase() ||
+        f.fighterName.toUpperCase() === fighterId.toUpperCase()
+      );
+      
+      if (!fighterData || !fighterData.marketData) {
+        console.log('No relevant data for current fighter in update');
+        return;
+      }
+      
+      // Update the chart data
+      setChartData(prevData => {
+        if (!prevData) return prevData;
+        
+        // Convert socket market data to our type format
+        const marketData: CoinMarketData = {
+          price: fighterData.marketData?.price ?? 0,
+          marketCap: fighterData.marketData?.marketCap ?? 0,
+          volume24h: fighterData.marketData?.volume24h ?? 0,
+          percentChange24h: fighterData.marketData?.percentChange24h ?? 0
+        };
+        
+        // If we have existing data, add the new data point
+        if (prevData.datasets.length > 0) {
+          const newLabels = [...prevData.labels, new Date().toLocaleTimeString()];
+          
+          // Add the new price to our dataset
+          const newDatasets = prevData.datasets.map(dataset => ({
+            ...dataset,
+            data: [...dataset.data, fighterData.marketData!.price]
+          }));
+          
+          // Keep only the last 24 data points to avoid overcrowding
+          const maxPoints = 24;
+          if (newLabels.length > maxPoints) {
+            newLabels.splice(0, newLabels.length - maxPoints);
+            newDatasets.forEach(dataset => {
+              dataset.data.splice(0, dataset.data.length - maxPoints);
+            });
+          }
+          
+          return {
+            ...prevData,
+            labels: newLabels,
+            datasets: newDatasets,
+            marketData: marketData
+          };
+        }
+        
+        // No existing data, just update market data
+        return {
+          ...prevData,
+          marketData: marketData
+        };
+      });
+    });
+    
+    // Clean up subscription
+    return unsubscribe;
+  }, [matchId, fighterId]);
 
   return { chartData, loading, error, usedFallback };
 }; 

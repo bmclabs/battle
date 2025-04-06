@@ -3,35 +3,22 @@
 import React from 'react';
 import Button from './ui/Button';
 import { formatWalletAddress, formatSolAmount } from '../utils';
+import { useWalletAuth } from '@/lib/context/WalletContext';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 
-interface User {
-  id: string;
-  wallet_address: string;
-  username: string;
-  avatar_url: string;
-  created_at: string;
-  updated_at: string;
-}
+const WalletConnect: React.FC = () => {
+  const { connected, walletAddress, balance, connecting, user, signIn, signOut } = useWalletAuth();
+  const { setVisible } = useWalletModal();
 
-interface WalletConnectProps {
-  connected: boolean;
-  walletAddress: string;
-  balance: number;
-  connecting: boolean;
-  user?: User | null;
-  onConnect: () => Promise<void>;
-  onDisconnect: () => void;
-}
+  const handleConnect = async () => {
+    if (!connected) {
+      setVisible(true);
+    } else if (!user) {
+      await signIn();
+    }
+  };
 
-const WalletConnect: React.FC<WalletConnectProps> = ({
-  connected,
-  walletAddress,
-  balance,
-  connecting,
-  user,
-  onConnect,
-  onDisconnect
-}) => {
   return (
     <div className="flex items-center space-x-4">
       {connected ? (
@@ -40,7 +27,7 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
               <span className="text-white text-[10px]">
-                {user?.username ? `${user.username} | ` : ''}{formatWalletAddress(walletAddress)} |
+                {user?.username ? `${user.username} | ` : ''}{formatWalletAddress(walletAddress || '')} |
               </span>
             </div>
             <div className="text-secondary text-[10px]">
@@ -50,7 +37,7 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
           <Button 
             variant="danger" 
             size="sm" 
-            onClick={onDisconnect}
+            onClick={signOut}
           >
             DISCONNECT
           </Button>
@@ -59,7 +46,7 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
         <Button
           variant="primary"
           size="sm"
-          onClick={onConnect}
+          onClick={handleConnect}
           disabled={connecting}
           isLoading={connecting}
         >

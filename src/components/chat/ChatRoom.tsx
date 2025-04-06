@@ -1,25 +1,32 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChatMessage } from '../../types';
+import { ChatMessage, ChatUser } from '../../types';
 import { formatWalletAddress } from '../../utils';
 import Button from '../ui/Button';
+import { useChat } from '../../hooks/useChat';
 
 interface ChatRoomProps {
-  messages: ChatMessage[];
-  onSendMessage: (message: string) => void;
   walletAddress: string;
   connected: boolean;
+  userId?: string;
 }
 
 const ChatRoom: React.FC<ChatRoomProps> = ({
-  messages,
-  onSendMessage,
   walletAddress,
-  connected
+  connected,
+  userId = ''
 }) => {
   const [message, setMessage] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+  
+  // Use the chat hook
+  const { messages, users, error, sendMessage } = useChat({
+    roomId: 'global',
+    userId: userId,
+    walletAddress,
+    isConnected: connected
+  });
 
   // Check if user is near bottom of chat
   const isNearBottom = () => {
@@ -46,7 +53,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     e.preventDefault();
     if (!message.trim() || !connected) return;
     
-    onSendMessage(message);
+    sendMessage(message);
     setMessage('');
     setAutoScroll(true); // Enable auto-scroll when sending a message
   };
@@ -73,14 +80,20 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
               <div 
                 key={msg.id} 
                 className={`p-1 rounded ${
-                  msg.walletAddress === walletAddress
-                    ? 'bg-primary/40 border-l-2 border-primary'
-                    : 'bg-primary/30 border-l-2 border-primary'
+                  msg.walletAddress === 'system'
+                    ? 'bg-gray-800/40 border-l-2 border-gray-500'
+                    : msg.walletAddress === walletAddress
+                      ? 'bg-primary/40 border-l-2 border-primary'
+                      : 'bg-primary/30 border-l-2 border-primary'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-gray-400">
-                    {formatWalletAddress(msg.walletAddress)}
+                  <span className={`text-xs font-bold ${
+                    msg.walletAddress === 'system' ? 'text-gray-400' : 'text-primary'
+                  }`}>
+                    {msg.walletAddress === 'system' 
+                      ? 'SYSTEM' 
+                      : formatWalletAddress(msg.walletAddress)}
                   </span>
                   <span className="text-xs text-gray-500">
                     {new Date(msg.timestamp).toLocaleTimeString()}
@@ -93,6 +106,15 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
           </div>
         )}
       </div>
+      
+      {/* Connected users */}
+      {users.length > 0 && (
+        <div className="px-2 py-1 border-t border-primary bg-black/50">
+          <p className="text-gray-400 text-xs">
+            {users.length} user{users.length !== 1 ? 's' : ''} online
+          </p>
+        </div>
+      )}
       
       {/* Message input */}
       <form onSubmit={handleSendMessage} className="p-2 border-t border-primary">
@@ -121,6 +143,13 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
           </div>
         )}
       </form>
+      
+      {/* Error message */}
+      {error && (
+        <div className="p-2 bg-red-900/50 border-t border-red-500">
+          <p className="text-red-300 text-xs">{error}</p>
+        </div>
+      )}
     </div>
   );
 };

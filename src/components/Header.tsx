@@ -4,36 +4,15 @@ import React from 'react';
 import Image from 'next/image';
 import WalletConnect from './WalletConnect';
 
-interface User {
-  id: string;
-  wallet_address: string;
-  username: string;
-  avatar_url: string;
-  created_at: string;
-  updated_at: string;
-}
-
 interface HeaderProps {
-  connected: boolean;
-  walletAddress: string;
-  balance: number;
-  connecting: boolean;
-  user?: User | null;
-  onConnect: () => Promise<void>;
-  onDisconnect: () => void;
+  className?: string;
 }
 
 const Header: React.FC<HeaderProps> = ({
-  connected,
-  walletAddress,
-  balance,
-  connecting,
-  user,
-  onConnect,
-  onDisconnect
+  className
 }) => {
   return (
-    <header className="w-full p-4 border-b border-primary bg-black/80">
+    <header className={`w-full p-4 border-b border-primary bg-black/80 ${className || ''}`}>
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center h-16 relative">
           {/* Logo container with fixed size */}
@@ -48,15 +27,7 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
         
-        <WalletConnect
-          connected={connected}
-          walletAddress={walletAddress}
-          balance={balance}
-          connecting={connecting}
-          user={user}
-          onConnect={onConnect}
-          onDisconnect={onDisconnect}
-        />
+        <WalletConnect />
       </div>
     </header>
   );

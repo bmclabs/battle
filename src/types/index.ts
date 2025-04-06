@@ -75,9 +75,17 @@ export interface MatchBettingSummary {
 // Chat types
 export interface ChatMessage {
   id: string;
+  userId?: string;
+  roomId?: string;
   walletAddress: string;
   message: string;
   timestamp: number;
+}
+
+export interface ChatUser {
+  id: string;
+  walletAddress: string;
+  roomId: string;
 }
 
 // Chart types

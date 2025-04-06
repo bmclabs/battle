@@ -99,7 +99,7 @@ export const useWallet = () => {
   useEffect(() => {
     // Only run on the client side
     if (typeof window !== 'undefined') {
-      const storedToken = localStorage.getItem('authToken');
+      const storedToken = localStorage.getItem('auth_token');
       if (storedToken) {
         setToken(storedToken);
         fetchUser(storedToken);
@@ -117,7 +117,7 @@ export const useWallet = () => {
       setToken(null);
       setUser(null);
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('authToken');
+        localStorage.removeItem('auth_token');
       }
     }
   };
@@ -146,7 +146,7 @@ export const useWallet = () => {
       setToken(authToken);
       setUser(userData);
       if (typeof window !== 'undefined') {
-        localStorage.setItem('authToken', authToken);
+        localStorage.setItem('auth_token', authToken);
       }
       
       // Close sign modal
@@ -202,7 +202,7 @@ export const useWallet = () => {
       setShowSignModal(false);
       setChallenge('');
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('authToken');
+        localStorage.removeItem('auth_token');
       }
     }
   };

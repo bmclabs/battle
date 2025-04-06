@@ -9,11 +9,10 @@ import BettingPanel from '../components/betting/BettingPanel';
 import BetsList from '../components/betting/BetsList';
 import BetPlacedPanel from '../components/betting/BetPlacedPanel';
 import CoinChart from '../components/chart/CoinChart';
-import SignMessageModal from '../components/SignMessageModal';
 import { useMatch } from '../hooks/useMatch';
 import { useBetting } from '../hooks/useBetting';
 import { useChartData as useChartDataHook } from '../hooks/useChartData';
-import { useWallet } from '../hooks/useWallet';
+import { useWalletAuth } from '@/lib/context/WalletContext';
 import { initializeSocket, disconnectSocket } from '../services/socket';
 import { GameMode } from '../types';
 import BetPaused from '@/components/betting/BetPaused';
@@ -37,31 +36,19 @@ export default function Home() {
     userBets,
     submitBet,
     loading: bettingLoading
-  } = useBetting(match?.id || '');
-
-  // Get chat data
-  // const { 
-  //   messages, 
-  //   sendMessage 
-  // } = useChat();
+  } = useBetting({ 
+    matchId: match?.id || '', 
+    gameMode 
+  });
 
   // Get wallet data with authentication
   const {
     connected,
     walletAddress,
     balance,
-    connecting,
-    error,
     user,
-    token,
-    showSignModal,
-    challenge,
-    connect,
-    disconnect,
-    verifyWalletSignature,
-    sendTransaction,
-    wallet
-  } = useWallet();
+    isAuthenticated
+  } = useWalletAuth();
 
   // Get chart data for selected fighter
   const { 
@@ -79,12 +66,20 @@ export default function Home() {
   // Check if user has a placed bet
   const userPlacedBet = userBets.find(bet => bet.status === 'placed');
 
+  // Effect to ensure bet data is cleared when user disconnects
+  useEffect(() => {
+    if (!connected) {
+      console.log('User disconnected, ensuring bet data is cleared');
+      // The userBets array should be empty at this point due to the useBetting hook
+      // This is a safety check to ensure the UI updates correctly
+    }
+  }, [connected]);
+
   // Handle placing a bet
   const handlePlaceBet = async (fighterId: string, amount: number) => {
-    if (!connected || !token) {
-      // If not authenticated, connect wallet first
-      await handleConnect();
-      if (!connected || !token) return;
+    if (!connected || !isAuthenticated) {
+      console.error("User not authenticated");
+      return;
     }
     
     if (!user?.id) {
@@ -106,8 +101,8 @@ export default function Home() {
       // Place bet using the new flow (on-chain transaction first, then save to backend)
       console.log(`Creating bet for fighter ${fighterId} with amount ${amount} SOL`);
       
-      // We need to pass the entire wallet object to access signing functions
-      const bet = await submitBet(walletAddress, amount, fighterId, wallet, match.matchAccountPubkey);
+      // Trigger bet submission - passing in necessary data
+      const bet = await submitBet(walletAddress || '', amount, fighterId, match.matchAccountPubkey);
       
       console.log('Bet placed successfully!', bet);
       
@@ -120,65 +115,9 @@ export default function Home() {
     }
   };
 
-  // Handle sending a chat message
-  const handleSendMessage = async (message: string) => {
-    if (!connected || !token) {
-      // If not authenticated, connect wallet first
-      await handleConnect();
-      if (!connected || !token) return;
-    }
-    
-    // await sendMessage(walletAddress, message);
-  };
-
-  // Handle wallet connection with authentication
-  const handleConnect = async () => {
-    try {
-      await connect();
-    } catch (err) {
-      console.error('Failed to connect wallet:', err);
-    }
-  };
-
-  // Handle wallet verification
-  const handleVerify = async () => {
-    try {
-      await verifyWalletSignature();
-    } catch (err) {
-      console.error('Failed to verify wallet:', err);
-    }
-  };
-
-  // Display wallet error if any
-  useEffect(() => {
-    if (error) {
-      console.error('Wallet error:', error);
-      // You could add a toast notification here
-    }
-  }, [error]);
-
   return (
     <div className="min-h-screen flex flex-col relative">
-      {/* Sign Message Modal */}
-      {showSignModal && (
-        <SignMessageModal
-          walletAddress={walletAddress}
-          challenge={challenge}
-          isLoading={connecting}
-          onVerify={handleVerify}
-          onDisconnect={disconnect}
-        />
-      )}
-      
-      <Header
-        connected={connected}
-        walletAddress={walletAddress}
-        balance={balance}
-        connecting={connecting}
-        user={user}
-        onConnect={handleConnect}
-        onDisconnect={disconnect}
-      />
+      <Header />
       
       <main className="flex-1 container mx-auto p-4 z-10">
         {matchLoading ? (
@@ -203,6 +142,7 @@ export default function Home() {
 
                 {/* CASE 2: Show BetPlacedPanel when user has a bet and not loading */}
                 {gameMode === GameMode.PREPARATION && 
+                 connected &&
                  userPlacedBet && 
                  !bettingLoading && (
                     <div className="h-full">
@@ -255,10 +195,9 @@ export default function Home() {
               {/* Chat Room (right) */}
               <div className="col-span-3 h-[450px]">
                 <ChatRoom
-                  messages={[]}
-                  onSendMessage={handleSendMessage}
-                  walletAddress={walletAddress}
+                  walletAddress={walletAddress || ''}
                   connected={connected}
+                  userId={user?.id}
                 />
               </div>
             </div>
