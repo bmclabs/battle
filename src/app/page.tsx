@@ -7,11 +7,11 @@ import BattleArena from '../components/battle/BattleArena';
 import ChatRoom from '../components/chat/ChatRoom';
 import BettingPanel from '../components/betting/BettingPanel';
 import BetsList from '../components/betting/BetsList';
+import BetPlacedPanel from '../components/betting/BetPlacedPanel';
 import CoinChart from '../components/chart/CoinChart';
 import SignMessageModal from '../components/SignMessageModal';
 import { useMatch } from '../hooks/useMatch';
 import { useBetting } from '../hooks/useBetting';
-import { useChat } from '../hooks/useChat';
 import { useChartData as useChartDataHook } from '../hooks/useChartData';
 import { useWallet } from '../hooks/useWallet';
 import { initializeSocket, disconnectSocket } from '../services/socket';
@@ -31,18 +31,19 @@ export default function Home() {
   // Get match data
   const { match, loading: matchLoading, gameMode, setGameMode } = useMatch();
 
-  // Get betting data
-  const { 
-    bets, 
-    submitBet, 
-    getTotalBets
-  } = useBetting();
+  // Get betting data for current match
+  const {
+    matchBets,
+    userBets,
+    submitBet,
+    loading: bettingLoading
+  } = useBetting(match?.id || '');
 
   // Get chat data
-  const { 
-    messages, 
-    sendMessage 
-  } = useChat();
+  // const { 
+  //   messages, 
+  //   sendMessage 
+  // } = useChat();
 
   // Get wallet data with authentication
   const {
@@ -58,7 +59,8 @@ export default function Home() {
     connect,
     disconnect,
     verifyWalletSignature,
-    sendTransaction
+    sendTransaction,
+    wallet
   } = useWallet();
 
   // Get chart data for selected fighter
@@ -74,6 +76,9 @@ export default function Home() {
     error: fighter2ChartError
   } = useChartDataHook(match?.fighter2?.id || '', match?.id);
 
+  // Check if user has a placed bet
+  const userPlacedBet = userBets.find(bet => bet.status === 'placed');
+
   // Handle placing a bet
   const handlePlaceBet = async (fighterId: string, amount: number) => {
     if (!connected || !token) {
@@ -82,16 +87,36 @@ export default function Home() {
       if (!connected || !token) return;
     }
     
+    if (!user?.id) {
+      console.error("User not authenticated");
+      return;
+    }
+    
+    if (!match?.id) {
+      console.error("No active match");
+      return;
+    }
+    
+    if (!match?.matchAccountPubkey) {
+      console.error("Match account public key not available");
+      return;
+    }
+    
     try {
-      // Send transaction
-      const success = await sendTransaction(amount);
-      if (!success) throw new Error('Transaction failed');
+      // Place bet using the new flow (on-chain transaction first, then save to backend)
+      console.log(`Creating bet for fighter ${fighterId} with amount ${amount} SOL`);
       
-      // Submit bet
-      await submitBet(walletAddress, amount, fighterId);
+      // We need to pass the entire wallet object to access signing functions
+      const bet = await submitBet(walletAddress, amount, fighterId, wallet, match.matchAccountPubkey);
+      
+      console.log('Bet placed successfully!', bet);
+      
+      // Here you could add a success notification
     } catch (err) {
-      console.error('Failed to place bet:', err);
-      throw err;
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Failed to place bet:', errorMessage);
+      
+      // Here you could add an error notification to the UI
     }
   };
 
@@ -103,7 +128,7 @@ export default function Home() {
       if (!connected || !token) return;
     }
     
-    await sendMessage(walletAddress, message);
+    // await sendMessage(walletAddress, message);
   };
 
   // Handle wallet connection with authentication
@@ -123,15 +148,6 @@ export default function Home() {
       console.error('Failed to verify wallet:', err);
     }
   };
-
-  // Handle game mode change (for demo purposes)
-  const handleGameModeChange = (mode: GameMode) => {
-    setGameMode(mode);
-  };
-
-  // Calculate total bets for each fighter
-  const totalBetsFighter1 = match?.fighter1 ? getTotalBets(match.fighter1.id) : 0;
-  const totalBetsFighter2 = match?.fighter2 ? getTotalBets(match.fighter2.id) : 0;
 
   // Display wallet error if any
   useEffect(() => {
@@ -175,35 +191,52 @@ export default function Home() {
             <div className="grid grid-cols-12 gap-4 mb-4 h-[450px]">
               {/* Betting Panel (left) */}
               <div className="col-span-3 h-full">
-                {gameMode === GameMode.PREPARATION && (
-                  <div className="h-full">
-                    <BettingPanel
-                      fighter1={match?.fighter1 || null}
-                      fighter2={match?.fighter2 || null}
-                      gameMode={gameMode}
-                      onPlaceBet={handlePlaceBet}
-                      walletConnected={connected}
-                      walletBalance={balance}
-                    />
-                  </div>
-                )}
-                
-                {gameMode === GameMode.BATTLE && (
-                  <div className="h-full">
-                    <BetsList
-                      bets={bets}
-                      fighter1={match?.fighter1 || null}
-                      fighter2={match?.fighter2 || null}
-                      gameMode={gameMode}
-                      totalBetsFighter1={totalBetsFighter1}
-                      totalBetsFighter2={totalBetsFighter2}
-                    />
-                  </div>
+                {/* CASE 1: Show Paused Bet panel when in non-preparation modes or loading */}
+                {(gameMode === GameMode.COMPLETED || 
+                  gameMode === GameMode.REFUND || 
+                  gameMode === GameMode.REFUND_FAILED || 
+                  gameMode === GameMode.PAUSED || bettingLoading) && (
+                    <div className="h-full">
+                      <BetPaused />
+                    </div>
                 )}
 
-                {(gameMode === GameMode.COMPLETED || gameMode === GameMode.REFUND || gameMode === GameMode.PAUSED) && (
+                {/* CASE 2: Show BetPlacedPanel when user has a bet and not loading */}
+                {gameMode === GameMode.PREPARATION && 
+                 userPlacedBet && 
+                 !bettingLoading && (
+                    <div className="h-full">
+                      <BetPlacedPanel
+                        bet={userPlacedBet}
+                        fighter1={match?.fighter1 || null}
+                        fighter2={match?.fighter2 || null}
+                      />
+                    </div>
+                )}
+
+                {/* CASE 3: Show BettingPanel when in preparation, no bet, and not loading */}
+                {gameMode === GameMode.PREPARATION && 
+                 !userPlacedBet && 
+                 !bettingLoading && (
+                  <BettingPanel
+                    fighter1={match?.fighter1 || null}
+                    fighter2={match?.fighter2 || null}
+                    gameMode={gameMode}
+                    onPlaceBet={handlePlaceBet}
+                    walletConnected={connected}
+                    walletBalance={balance}
+                  />
+                )}
+                
+                {/* CASE 4: Show BetsList during battle */}
+                {gameMode === GameMode.BATTLE && !bettingLoading && (
                   <div className="h-full">
-                    <BetPaused />
+                    <BetsList
+                      bets={matchBets || null}
+                      fighter1={match?.fighter1 || null}
+                      fighter2={match?.fighter2 || null}
+                      gameMode={gameMode}
+                    />
                   </div>
                 )}
               </div>
@@ -222,7 +255,7 @@ export default function Home() {
               {/* Chat Room (right) */}
               <div className="col-span-3 h-[450px]">
                 <ChatRoom
-                  messages={messages}
+                  messages={[]}
                   onSendMessage={handleSendMessage}
                   walletAddress={walletAddress}
                   connected={connected}

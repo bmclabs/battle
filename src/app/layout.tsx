@@ -34,6 +34,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pixelFont.variable} antialiased`}
+        suppressHydrationWarning
       >
         <ClientWalletProvider>
           <MaintenanceBannerWrapper />

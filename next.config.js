@@ -9,6 +9,10 @@ const nextConfig = {
   },
   // Server external packages that need special handling
   serverExternalPackages: ['sharp', 'canvas'],
+  // Suppress hydration warnings for body attributes added by browser extensions
+  experimental: {
+    suppressHydrationWarning: true,
+  },
 };
 
 module.exports = nextConfig; 

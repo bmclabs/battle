@@ -197,11 +197,31 @@ export const generateFallbackChartData = (fighterId: string) => {
     data.push(basePrice + volatility * randomFactor);
   }
   
-  // Colors based on fighter ID
-  const borderColor = isFirst ? '#14F195' : '#FF69B4';
-  const backgroundColor = isFirst 
-    ? 'rgba(20, 241, 149, 0.2)' 
-    : 'rgba(255, 105, 180, 0.2)';
+  // Apply same color logic as the main function
+  let borderColor = '#14F195';  // default green
+  let backgroundColor = 'rgba(20, 241, 149, 0.2)';
+  
+  const lowerFighterId = fighterId.toLowerCase();
+  // Assign colors based on fighter ID
+  if (lowerFighterId === 'doge') {
+    borderColor = '#BA9F33';
+    backgroundColor = 'rgba(186, 159, 51, 0.2)';
+  } else if (lowerFighterId === 'shiba') {
+    borderColor = '#F3A62F';
+    backgroundColor = 'rgba(243, 166, 47, 0.2)';
+  } else if (lowerFighterId === 'pepe') {
+    borderColor = '#4C9641';
+    backgroundColor = 'rgba(76, 150, 65, 0.2)';
+  } else if (lowerFighterId === 'pengu') {
+    borderColor = '#8CB3FE';
+    backgroundColor = 'rgba(140, 179, 254, 0.2)';
+  } else if (lowerFighterId === 'trump') {
+    borderColor = '#EAD793';
+    backgroundColor = 'rgba(234, 215, 147, 0.2)';
+  } else if (lowerFighterId === 'brett') {
+    borderColor = '#00ACDC';
+    backgroundColor = 'rgba(0, 172, 220, 0.2)';
+  }
   
   // Create market data
   const latestPrice = data[data.length - 1];

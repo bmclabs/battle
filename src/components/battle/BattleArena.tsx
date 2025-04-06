@@ -60,13 +60,6 @@ const BattleArena: React.FC<BattleArenaProps> = ({
           {gameMode === GameMode.PAUSED && "Game Paused"}
         </p>
       </div>
-      
-      {/* Loading state */}
-      {(!fighter1 || !fighter2) && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-30">
-          <p className="text-white text-xl pixel-glitch">Loading fighters...</p>
-        </div>
-      )}
     </div>
   );
 };

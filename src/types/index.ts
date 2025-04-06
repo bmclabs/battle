@@ -5,6 +5,7 @@ export enum GameMode {
   BATTLE = 'battle',
   COMPLETED = 'completed',
   REFUND = 'refund',
+  REFUND_FAILED = 'refund-failed',
   PAUSED = 'paused'
 }
 
@@ -22,6 +23,7 @@ export interface Fighter {
 
 export interface Match {
   id: string;
+  matchAccountPubkey?: string;
   fighter1: Fighter;
   fighter2: Fighter;
   totalBetsFighter1: number;
@@ -34,10 +36,40 @@ export interface Match {
 
 // Betting types
 export interface Bet {
+  id: string;
+  matchId: string;
   walletAddress: string;
   amount: number;
   fighterId: string;
+  fighterName: string;
   timestamp: number;
+  status: string;
+  transactionSignature?: string;
+  claimed: boolean;
+}
+
+export interface BetSignature {
+  betId: string;
+  signature: string;
+  instructions: {
+    programId: string;
+    treasuryWallet: string;
+  };
+}
+
+export interface MatchBettingSummary {
+  matchId: string;
+  totalBets: number;
+  totalAmount: string;
+  fighters: Record<string, {
+    totalBets: number;
+    totalAmount: string | number;
+  }>;
+  userBets?: {
+    walletAddress: string;
+    fighterName: string;
+    amount: string;
+  }[];
 }
 
 // Chat types

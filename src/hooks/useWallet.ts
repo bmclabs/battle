@@ -207,8 +207,15 @@ export const useWallet = () => {
     }
   };
 
-  // Send transaction function (simplified)
-  const sendTransaction = async (amount: number): Promise<boolean> => {
+  // Send transaction function to process bet
+  const sendTransaction = async (
+    amount: number, 
+    betSignature?: string,
+    instructions?: {
+      programId: string;
+      treasuryWallet: string;
+    }
+  ): Promise<string> => {
     try {
       if (!connected || !publicKey) {
         throw new Error('Wallet not connected');
@@ -222,18 +229,81 @@ export const useWallet = () => {
         throw new Error('Insufficient balance');
       }
       
-      // In a real implementation, you would use the wallet adapter to send a transaction
-      // This is just a mock implementation
+      if (!betSignature || !instructions) {
+        throw new Error('Bet signature and instructions are required');
+      }
+      
+      console.log('Creating transaction for bet with signature:', betSignature);
+      
+      // In a real implementation:
+      // 1. Create a transaction using the solana/web3.js library
+      // 2. Add instructions to transfer funds using the provided programId and treasuryWallet
+      // 3. Sign the transaction with the user's wallet
+      // 4. Send the transaction to the Solana network
+      // 5. Get the transaction signature for verification
+      
+      // Example pseudo-code for real implementation:
+      /*
+      const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+      
+      // Create a transaction
+      const transaction = new Transaction();
+      
+      // Create the treasury wallet public key
+      const treasuryWalletPublicKey = new PublicKey(instructions.treasuryWallet);
+      
+      // Add the instruction to transfer SOL
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: treasuryWalletPublicKey,
+          lamports: amount * LAMPORTS_PER_SOL,
+        })
+      );
+      
+      // Add custom instruction data with bet details
+      // This would include the bet signature and other details
+      const programId = new PublicKey(instructions.programId);
+      const dataBuffer = Buffer.from(JSON.stringify({
+        betSignature,
+        amount,
+        timestamp: Date.now()
+      }));
+      
+      transaction.add(
+        new TransactionInstruction({
+          keys: [
+            { pubkey: publicKey, isSigner: true, isWritable: true },
+            { pubkey: treasuryWalletPublicKey, isSigner: false, isWritable: true },
+          ],
+          programId,
+          data: dataBuffer
+        })
+      );
+      
+      // Sign and send the transaction
+      const txSignature = await sendTransaction(transaction, connection);
+      
+      // Wait for confirmation
+      await connection.confirmTransaction(txSignature, 'confirmed');
+      */
+      
+      // This is a mock implementation for development
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Generate a mock transaction signature - in production this would be a real blockchain transaction ID
+      const txSignature = 'tx_' + Math.random().toString(36).substring(2, 15);
       
       // Update balance
       setBalance(prevBalance => prevBalance - amount);
       
-      return true;
+      console.log('Transaction completed with signature:', txSignature);
+      
+      return txSignature;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Transaction failed');
-      console.error(err);
-      return false;
+      console.error('Transaction error:', err);
+      throw err;
     }
   };
 
@@ -250,6 +320,7 @@ export const useWallet = () => {
     connect,
     disconnect,
     verifyWalletSignature,
-    sendTransaction
+    sendTransaction,
+    wallet
   };
 }; 

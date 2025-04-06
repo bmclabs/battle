@@ -8,6 +8,7 @@ export const useMatch = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [gameMode, setGameMode] = useState<GameMode>(GameMode.PREPARATION);
+  const [matchAccountPubkey, setMatchAccountPubkey] = useState<string | null>(null);
 
   useEffect(() => {
     const loadMatch = async () => {
@@ -19,6 +20,10 @@ export const useMatch = () => {
           const matchData = await fetchCurrentMatch();
           setMatch(matchData);
           setGameMode(matchData.status);
+          // Store the match account pubkey
+          if (matchData.matchAccountPubkey) {
+            setMatchAccountPubkey(matchData.matchAccountPubkey);
+          }
           setError(null);
         } catch (fetchError) {
           // If no active match found, use a default match
@@ -40,5 +45,5 @@ export const useMatch = () => {
     loadMatch();
   }, []);
 
-  return { match, loading, error, gameMode, setGameMode };
+  return { match, loading, error, gameMode, setGameMode, matchAccountPubkey };
 }; 

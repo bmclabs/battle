@@ -6,6 +6,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3080';
 // API response interface based on Swagger documentation
 interface CurrentMatchResponse {
   matchId: string;
+  matchAccountPubkey: string;
   fighter1: string;
   fighter2: string;
   status: string;
@@ -40,6 +41,8 @@ const mapStatusToGameMode = (status: string): GameMode => {
       return GameMode.COMPLETED;
     case 'refund':
       return GameMode.REFUND;
+    case 'refund-failed':
+      return GameMode.REFUND_FAILED;
     case 'paused':
       return GameMode.PAUSED;
     default:
@@ -80,20 +83,21 @@ export const fetchCurrentMatch = async (): Promise<Match> => {
       
       // Create Fighter object
       const fighterObj: Fighter = {
-        id: fighter.name.toLowerCase(), // Use lowercase name as ID
+        id: fighter.name.toUpperCase(), // Use lowercase name as ID
         name: fighter.name,
         image: fighter.image || `/fighters/${fighter.name.toLowerCase()}.png`, // Default image path
         stats
       };
       
-      fighterMap[fighter.name.toLowerCase()] = fighterObj;
+      fighterMap[fighter.name.toUpperCase()] = fighterObj;
     });
     
     // Convert response to Match interface
     const match: Match = {
       id: matchData.matchId,
-      fighter1: fighterMap[matchData.fighter1.toLowerCase()],
-      fighter2: fighterMap[matchData.fighter2.toLowerCase()],
+      matchAccountPubkey: matchData.matchAccountPubkey,
+      fighter1: fighterMap[matchData.fighter1],
+      fighter2: fighterMap[matchData.fighter2],
       status: mapStatusToGameMode(matchData.status),
       startTime: new Date(matchData.timeStart).getTime(),
       endTime: null,

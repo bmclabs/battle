@@ -223,7 +223,7 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
       
       {/* Error message */}
       {error && (
-        <div className="mt-1 text-red-500 text-xs text-center pixel-glitch">
+        <div className="mt-1 text-red-500 text-xs text-center">
           {error}
         </div>
       )}
