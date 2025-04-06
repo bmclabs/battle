@@ -106,6 +106,15 @@ export const useMatch = () => {
         const newGameMode = status as GameMode;
         setGameMode(newGameMode);
         
+        // Special handling for specific states
+        if (newGameMode === GameMode.REFUND) {
+          console.log(`Match ${matchId} is now in refund state. Bets will be refunded.`);
+        } else if (newGameMode === GameMode.REFUND_FAILED) {
+          console.log(`Match ${matchId} is now in refund failed state. There was an issue with the refund process.`);
+        } else if (newGameMode === GameMode.PAUSED) {
+          console.log(`Match ${matchId} is now paused due to network issues. The game will resume when resolved.`);
+        }
+        
         // Update match status as well
         setMatch(prevMatch => {
           if (!prevMatch) return prevMatch;
@@ -131,6 +140,12 @@ export const useMatch = () => {
         // Update match with winner and status
         setMatch(prevMatch => {
           if (!prevMatch) return prevMatch;
+
+          // Special handling for claiming state - we want to preserve match data
+          if (newGameMode === GameMode.CLAIMING) {
+            console.log(`Match ${matchId} is now in claiming state with winner: ${winner}`);
+          }
+          
           return {
             ...prevMatch,
             status: newGameMode,
@@ -147,5 +162,5 @@ export const useMatch = () => {
     };
   }, [match]);
 
-  return { match, loading, error, gameMode, setGameMode, matchAccountPubkey };
+  return { match, loading, error, gameMode, matchAccountPubkey };
 }; 

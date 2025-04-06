@@ -37,11 +37,13 @@ const mapStatusToGameMode = (status: string): GameMode => {
       return GameMode.PREPARATION;
     case 'battle':
       return GameMode.BATTLE;
+    case 'claiming':
+      return GameMode.CLAIMING;
     case 'completed':
       return GameMode.COMPLETED;
     case 'refund':
       return GameMode.REFUND;
-    case 'refund-failed':
+    case 'refund_failed':
       return GameMode.REFUND_FAILED;
     case 'paused':
       return GameMode.PAUSED;

@@ -55,8 +55,10 @@ const BattleArena: React.FC<BattleArenaProps> = ({
         <p className="text-white text-[8px] uppercase">
           {gameMode === GameMode.PREPARATION && "Preparation"}
           {gameMode === GameMode.BATTLE && "Battle"}
+          {gameMode === GameMode.CLAIMING && "Claiming"}
           {gameMode === GameMode.COMPLETED && "Completed"}
           {gameMode === GameMode.REFUND && "Refund"}
+          {gameMode === GameMode.REFUND_FAILED && "Refund Failed"}
           {gameMode === GameMode.PAUSED && "Game Paused"}
         </p>
       </div>

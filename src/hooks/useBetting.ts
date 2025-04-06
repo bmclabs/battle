@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMatchActiveBets, placeBet, getUserCurrentBet } from '../services/bet';
 import { placeBetOnChain } from '../services/anchor';
-import { subscribeToNewBets } from '../services/socket';
 import { Bet, BetSignature, MatchBettingSummary, GameMode } from '../types';
 import { useWalletAuth } from '@/lib/context/WalletContext';
 import { useWallet } from '@solana/wallet-adapter-react';

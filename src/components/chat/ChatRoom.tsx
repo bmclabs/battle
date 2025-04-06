@@ -72,7 +72,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500 text-xs">No messages yet</p>
+            <p className="text-gray-500 text-center text-[10px]">Only connected users can see messages</p>
           </div>
         ) : (
           <div className="space-y-1 pr-1">

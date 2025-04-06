@@ -3,6 +3,7 @@ export enum GameMode {
   SEARCHING = 'searching',
   PREPARATION = 'preparation',
   BATTLE = 'battle',
+  CLAIMING = 'claiming',
   COMPLETED = 'completed',
   REFUND = 'refund',
   REFUND_FAILED = 'refund-failed',

@@ -17,6 +17,10 @@ import { initializeSocket, disconnectSocket } from '../services/socket';
 import { GameMode } from '../types';
 import BetPaused from '@/components/betting/BetPaused';
 import ChartPaused from '@/components/chart/ChartPaused';
+import BetClaiming from '@/components/betting/BetClaiming';
+import BetRefund from '@/components/betting/BetRefund';
+import BetRefundFailed from '@/components/betting/BetRefundFailed';
+import BetLogo from '@/components/betting/BetLogo';
 
 export default function Home() {
   // Initialize socket connection
@@ -28,7 +32,7 @@ export default function Home() {
   }, []);
 
   // Get match data
-  const { match, loading: matchLoading, gameMode, setGameMode } = useMatch();
+  const { match, loading: matchLoading, gameMode } = useMatch();
 
   // Get betting data for current match
   const {
@@ -130,11 +134,16 @@ export default function Home() {
             <div className="grid grid-cols-12 gap-4 mb-4 h-[450px]">
               {/* Betting Panel (left) */}
               <div className="col-span-3 h-full">
-                {/* CASE 1: Show Paused Bet panel when in non-preparation modes or loading */}
-                {(gameMode === GameMode.COMPLETED || 
-                  gameMode === GameMode.REFUND || 
-                  gameMode === GameMode.REFUND_FAILED || 
-                  gameMode === GameMode.PAUSED || bettingLoading) && (
+                {/* CASE 0: Show BetLogo during completed state */}
+              {gameMode === GameMode.COMPLETED && (
+                  <div className="h-full">
+                    <BetLogo />
+                  </div>
+                )}
+
+                {/* CASE 1: Show Paused Bet panel when in paused mode or loading */}
+                {(gameMode === GameMode.PAUSED || 
+                  bettingLoading) && (
                     <div className="h-full">
                       <BetPaused />
                     </div>
@@ -179,6 +188,40 @@ export default function Home() {
                     />
                   </div>
                 )}
+
+                {/* CASE 5: Show BetClaiming during claiming state */}
+                {gameMode === GameMode.CLAIMING && !bettingLoading && (
+                  <div className="h-full">
+                    <BetClaiming
+                      fighter1={match?.fighter1 || null}
+                      fighter2={match?.fighter2 || null}
+                      winnerId={match?.winner || null}
+                      userBetFighterId={userPlacedBet?.fighterId || null}
+                    />
+                  </div>
+                )}
+
+                {/* CASE 6: Show BetRefund during refund state */}
+                {gameMode === GameMode.REFUND && !bettingLoading && (
+                  <div className="h-full">
+                    <BetRefund
+                      fighter1={match?.fighter1 || null}
+                      fighter2={match?.fighter2 || null}
+                      userBetFighterId={userPlacedBet?.fighterId || null}
+                    />
+                  </div>
+                )}
+
+                {/* CASE 7: Show BetRefundFailed during refund failed state */}
+                {gameMode === GameMode.REFUND_FAILED && !bettingLoading && (
+                  <div className="h-full">
+                    <BetRefundFailed
+                      fighter1={match?.fighter1 || null}
+                      fighter2={match?.fighter2 || null}
+                      userBetFighterId={userPlacedBet?.fighterId || null}
+                    />
+                  </div>
+                )}
               </div>
               
               {/* Battle Arena (center) */}
@@ -213,16 +256,16 @@ export default function Home() {
 
               {/* Charts Section */}
               <div className="col-span-6 grid grid-cols-2 gap-4">
-                {(gameMode === GameMode.COMPLETED || gameMode === GameMode.REFUND || gameMode === GameMode.PAUSED) && (
+                {gameMode !== GameMode.PREPARATION && gameMode !== GameMode.BATTLE && (
                     <ChartPaused />
                 )}
 
-                {(gameMode === GameMode.COMPLETED || gameMode === GameMode.REFUND || gameMode === GameMode.PAUSED) && (
+                {gameMode !== GameMode.PREPARATION && gameMode !== GameMode.BATTLE && (
                     <ChartPaused />
                 )}
                 
                 {/* Fighter 1 Chart */}
-                {gameMode !== GameMode.PAUSED && (
+                {(gameMode === GameMode.PREPARATION || gameMode === GameMode.BATTLE) && (
                   <CoinChart
                     fighter={match?.fighter1 || null}
                     chartData={fighter1ChartData}
@@ -232,7 +275,7 @@ export default function Home() {
                 )}
                 
                 {/* Fighter 2 Chart */}
-                {gameMode !== GameMode.PAUSED && (
+                {(gameMode === GameMode.PREPARATION || gameMode === GameMode.BATTLE) && (
                   <CoinChart
                     fighter={match?.fighter2 || null}
                     chartData={fighter2ChartData}
