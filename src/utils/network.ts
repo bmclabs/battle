@@ -43,7 +43,11 @@ export const getQuickNodeRpcUrl = (): string | null => {
 export const getCustomRpcUrl = (): string | null => {
   const cluster = getCurrentCluster();
   if (cluster === 'mainnet-beta' && process.env.NEXT_PUBLIC_MAINNET_RPC_URL) {
-    return process.env.NEXT_PUBLIC_MAINNET_RPC_URL;
+    // Don't use the default Solana endpoint which returns 403
+    if (process.env.NEXT_PUBLIC_MAINNET_RPC_URL !== 'https://api.mainnet-beta.solana.com') {
+      return process.env.NEXT_PUBLIC_MAINNET_RPC_URL;
+    }
+    return null;
   } else if (cluster === 'devnet' && process.env.NEXT_PUBLIC_DEVNET_RPC_URL) {
     return process.env.NEXT_PUBLIC_DEVNET_RPC_URL;
   }
@@ -52,17 +56,35 @@ export const getCustomRpcUrl = (): string | null => {
 
 // Get the best available RPC URL
 export const getBestRpcUrl = (): string => {
-  // Priority: Helius > Custom > QuickNode > Default
-  const heliusUrl = getHeliusRpcUrl();
-  if (heliusUrl) return heliusUrl;
-  
-  const customUrl = getCustomRpcUrl();
-  if (customUrl) return customUrl;
-  
-  const quickNodeUrl = getQuickNodeRpcUrl();
-  if (quickNodeUrl) return quickNodeUrl;
-  
-  // Fallback to default Solana endpoint
   const cluster = getCurrentCluster();
-  return `https://api.${cluster}.solana.com`;
+  
+  if (cluster === 'mainnet-beta') {
+    // For mainnet, always prioritize Helius and never fall back to default endpoint
+    const heliusUrl = getHeliusRpcUrl();
+    if (heliusUrl) return heliusUrl;
+    
+    // If Helius is not available, try custom URL
+    const customUrl = getCustomRpcUrl();
+    if (customUrl) return customUrl;
+    
+    // If custom URL is not available, try QuickNode
+    const quickNodeUrl = getQuickNodeRpcUrl();
+    if (quickNodeUrl) return quickNodeUrl;
+    
+    // If no valid RPC endpoint is available, throw an error
+    throw new Error('No valid RPC endpoint available for mainnet. Please configure NEXT_PUBLIC_HELIUS_API_KEY.');
+  } else {
+    // For devnet, we can still use fallbacks
+    const heliusUrl = getHeliusRpcUrl();
+    if (heliusUrl) return heliusUrl;
+    
+    const customUrl = getCustomRpcUrl();
+    if (customUrl) return customUrl;
+    
+    const quickNodeUrl = getQuickNodeRpcUrl();
+    if (quickNodeUrl) return quickNodeUrl;
+    
+    // Fallback to default Solana endpoint only for devnet
+    return `https://api.${cluster}.solana.com`;
+  }
 }; 

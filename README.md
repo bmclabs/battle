@@ -47,7 +47,7 @@ NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta
 NEXT_PUBLIC_HELIUS_API_KEY=your-actual-helius-api-key
 ```
 
-The application is configured to prioritize Helius RPC for mainnet connections to ensure the best performance and reliability.
+> **IMPORTANT**: The application is configured to **ONLY** use Helius RPC for mainnet connections. The default public Solana endpoint (api.mainnet-beta.solana.com) cannot be used as it returns 403 Forbidden errors. You must provide a valid Helius API key for mainnet operations.
 
 ## Getting Started
 
