@@ -57,8 +57,24 @@ const BetClaiming: React.FC<BetClaimingProps> = ({
               You bet on <span className="text-green-400 font-bold">{winningFighter?.name}</span> and won!
             </div>
             <div className="bg-black/50 border border-[#14F195] p-4 rounded-md text-center">
-              <p className="text-green-200 mb-2">Your winnings are being processed</p>
-              <p className="text-white text-sm">Your funds will be automatically sent to your wallet shortly.</p>
+              <p className="text-green-200 text-xs mb-2">Your winnings are being processed</p>
+              <p className="text-white text-[10px]">Your funds will be automatically sent to your wallet shortly.</p>
+            </div>
+            <div className="text-white text-center mt-8">
+              <div className="flex items-center justify-center gap-2">
+                <div
+                  className="w-4 h-4 bg-white rounded-full animate-wave"
+                  style={{ animationDelay: "0s" }}
+                ></div>
+                <div
+                  className="w-4 h-4 bg-white rounded-full animate-wave"
+                  style={{ animationDelay: "0.2s" }}
+                ></div>
+                <div
+                  className="w-4 h-4 bg-white rounded-full animate-wave"
+                  style={{ animationDelay: "0.4s" }}
+                ></div>
+              </div>
             </div>
           </>
         ) : (
@@ -68,21 +84,33 @@ const BetClaiming: React.FC<BetClaimingProps> = ({
                 {winningFighter?.name}
               </div>
             )}
-            {winnerId ? (
+            {winnerId && (
               <div className="text-white text-center">
                 won the battle!
               </div>
-            ) : (
-              <div className="text-white text-center">
-                Calculating the payout...
-              </div>
             )}
-            <div className="bg-black/50 border border-[#FF69B4] p-4 rounded-md text-center">
+            <div className={`bg-black/50 border ${userBetFighterId ? 'border-[#FF69B4]' : 'border-[#000]'} p-4 rounded-md text-center`}>
               <p className="text-white text-sm">
                 {userBetFighterId 
                   ? "Better luck next match! Don't worry, every loss is a chance to learn." 
                   : "Payouts are being processed for all participants."}
               </p>
+            </div>
+            <div className="text-white text-center mt-8">
+              <div className="flex items-center justify-center gap-2">
+                <div
+                  className="w-4 h-4 bg-white rounded-full animate-wave"
+                  style={{ animationDelay: "0s" }}
+                ></div>
+                <div
+                  className="w-4 h-4 bg-white rounded-full animate-wave"
+                  style={{ animationDelay: "0.2s" }}
+                ></div>
+                <div
+                  className="w-4 h-4 bg-white rounded-full animate-wave"
+                  style={{ animationDelay: "0.4s" }}
+                ></div>
+              </div>
             </div>
           </>
         )}

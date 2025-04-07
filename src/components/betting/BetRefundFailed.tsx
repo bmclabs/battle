@@ -38,19 +38,36 @@ const BetRefundFailed: React.FC<BetRefundFailedProps> = ({
         </div>
         
         <div className="bg-black/50 border border-red-400 p-4 rounded-md text-center">
-          <p className="text-red-200 mb-2">Our team has been notified</p>
-          <p className="text-white text-sm">
-            We're working to resolve this issue as quickly as possible.
+          <p className="text-red-200 mb-2 text-sm">Our team has been notified</p>
+          <p className="text-white text-xs">
+            We&apos;re working to resolve this issue as quickly as possible.
           </p>
-          <p className="text-white text-sm mt-2">
-            If you don't receive your refund within 24 hours, please contact support.
+          <p className="text-white text-xs mt-2">
+            If you don&apos;t receive your refund within 24 hours, please contact support.
           </p>
+        </div>
+      </div>
+
+      <div className="text-white text-center mt-6 mb-4">
+        <div className="flex items-center justify-center gap-2">
+          <div
+            className="w-4 h-4 bg-white rounded-full animate-wave"
+            style={{ animationDelay: "0s" }}
+          ></div>
+          <div
+            className="w-4 h-4 bg-white rounded-full animate-wave"
+            style={{ animationDelay: "0.2s" }}
+          ></div>
+          <div
+            className="w-4 h-4 bg-white rounded-full animate-wave"
+            style={{ animationDelay: "0.4s" }}
+          ></div>
         </div>
       </div>
       
       <div className="mt-4 bg-black/50 p-2 text-center rounded-md">
-        <p className="text-gray-400 text-xs">
-          Click <a href="https://discord.gg/battle-memecoin-club" className="text-[#14F195]">here</a> to join our Discord
+        <p className="text-gray-400 text-[10px]">
+          Click <a href="https://discord.gg/Knnvu9zf5x" target="_blank" rel="noopener noreferrer" className="text-[#14F195]">here</a> to join our Discord
         </p>
       </div>
     </div>

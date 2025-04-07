@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const maintenanceValue = process.env.NEXT_PUBLIC_IS_MAINTENANCE;
   
   // For debugging during build (these logs will only appear during development)
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'development') {
     console.log('Middleware: NEXT_PUBLIC_IS_MAINTENANCE =', maintenanceValue);
     console.log('Middleware: typeof =', typeof maintenanceValue);
   }

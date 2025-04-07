@@ -15,8 +15,7 @@ const Header: React.FC<HeaderProps> = ({
     <header className={`w-full p-4 border-b border-primary bg-black/80 ${className || ''}`}>
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center h-16 relative">
-          {/* Logo container with fixed size */}
-          <div className="w-64 h-16 relative">
+        <div className="w-64 h-16 relative">
             <Image
               src="/logo/bmc-logo.gif"
               alt="Battle Memecoin Club"
@@ -24,7 +23,34 @@ const Header: React.FC<HeaderProps> = ({
               height={60}
               className="object-contain"
             />
-          </div>
+        </div>
+
+          <div className="flex justify-center space-x-8 mb-2 -ml-10">
+          <a 
+            href="https://x.com/battlememecoin" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-gray-400 hover:text-[#14F195] text-xs"
+          >
+            Twitter
+          </a>
+          <a 
+            href="https://discord.gg/Knnvu9zf5x" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-gray-400 hover:text-[#14F195] text-xs"
+          >
+            Discord
+          </a>
+          <a 
+            href="https://whitepaper.battlememecoin.club" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-gray-400 hover:text-[#14F195] text-xs"
+          >
+             Documentation
+          </a>
+        </div>
         </div>
         
         <WalletConnect />

@@ -285,3 +285,16 @@ body {
     opacity: 0.24387;
   }
 }
+
+@keyframes wave {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-wave {
+  animation: wave 1.2s infinite ease-in-out;
+}

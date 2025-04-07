@@ -1,7 +1,6 @@
 import React from 'react';
 import { Fighter, Bet } from '../../types';
 import { formatSolAmount } from '../../utils';
-import Button from '../ui/Button';
 
 // Fighter color map based on chart colors
 const FIGHTER_COLORS: Record<string, { border: string, background: string }> = {

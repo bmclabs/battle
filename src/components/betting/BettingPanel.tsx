@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Fighter, GameMode } from '../../types';
 import { formatSolAmount } from '../../utils';
 import Button from '../ui/Button';
+import TransactionStatus from '../TransactionStatus';
+import { TransactionStatusUpdate } from '../../hooks/useBetting';
 
 // Fighter color map based on chart colors
 const FIGHTER_COLORS: Record<string, { border: string, background: string }> = {
@@ -17,7 +19,7 @@ interface BettingPanelProps {
   fighter1: Fighter | null;
   fighter2: Fighter | null;
   gameMode: GameMode;
-  onPlaceBet: (fighterId: string, amount: number) => Promise<void>;
+  onPlaceBet: (fighterId: string, amount: number, onTransactionUpdate: (update: TransactionStatusUpdate) => void) => Promise<void>;
   walletConnected: boolean;
   walletBalance: number;
 }
@@ -34,6 +36,11 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
   const [betAmount, setBetAmount] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // New state for transaction status
+  const [transactionStatus, setTransactionStatus] = useState<'idle' | 'preparing' | 'sending' | 'confirming' | 'confirmed' | 'retrying' | 'failed'>('idle');
+  const [txSignature, setTxSignature] = useState<string | undefined>(undefined);
+  const [retryCount, setRetryCount] = useState<number>(0);
 
   // Predefined bet amounts
   const betOptions = [0.1, 0.5, 1, 5, 10, 25, 50, 100];
@@ -56,6 +63,11 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
     if (!walletConnected || isSubmitting) return;
     setSelectedFighter(fighterId);
     setError(null);
+    // Reset transaction status when changing fighter
+    if (transactionStatus !== 'idle') {
+      setTransactionStatus('idle');
+      setTxSignature(undefined);
+    }
   };
 
   const handleBetAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,6 +76,11 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
     if (/^\d*\.?\d*$/.test(value)) {
       setBetAmount(value);
       setError(null);
+      // Reset transaction status when changing amount
+      if (transactionStatus !== 'idle') {
+        setTransactionStatus('idle');
+        setTxSignature(undefined);
+      }
     }
   };
 
@@ -72,6 +89,11 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
     if (amount <= walletBalance) {
       setBetAmount(amount.toString());
       setError(null);
+      // Reset transaction status when changing amount
+      if (transactionStatus !== 'idle') {
+        setTransactionStatus('idle');
+        setTxSignature(undefined);
+      }
     } else {
       setError('Insufficient balance');
     }
@@ -102,11 +124,50 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
     try {
       setIsSubmitting(true);
       setError(null);
-      await onPlaceBet(selectedFighter, amount);
+      
+      // Update transaction status to preparing
+      setTransactionStatus('preparing');
+      
+      // Short timeout to allow UI to update before potentially heavy transaction work
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Update status to sending
+      setTransactionStatus('sending');
+      
+      // Define the transaction update handler to update local UI state
+      const handleTransactionUpdate = (update: TransactionStatusUpdate) => {
+        if (update.status === 'retrying' && update.retryCount !== undefined) {
+          setRetryCount(update.retryCount);
+          setTransactionStatus('retrying');
+        } else if (update.status === 'confirming' && update.signature) {
+          setTxSignature(update.signature);
+          setTransactionStatus('confirming');
+        }
+      };
+      
+      // Pass the progress callback to the bet handler
+      await onPlaceBet(selectedFighter, amount, handleTransactionUpdate);
+      
+      // If we get here, the transaction was successful
+      setTransactionStatus('confirmed');
+      
+      // Reset form after successful bet
       setBetAmount('');
       setSelectedFighter(null);
+      
+      // Keep the success message visible for a few seconds
+      setTimeout(() => {
+        if (transactionStatus === 'confirmed') {
+          setTransactionStatus('idle');
+          setTxSignature(undefined);
+        }
+      }, 5000);
+      
     } catch (err) {
-      setError('Failed to place bet. Please try again.');
+      // Handle errors and show appropriate message
+      const errorMessage = err instanceof Error ? err.message : 'Failed to place bet. Please try again.';
+      setError(errorMessage);
+      setTransactionStatus('failed');
       console.error(err);
     } finally {
       setIsSubmitting(false);
@@ -211,25 +272,26 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
       </div>
       
       {/* Submit button */}
-      <Button
-        onClick={handleSubmitBet}
-        disabled={!walletConnected || isSubmitting || !selectedFighter || !betAmount}
-        variant="primary"
-        fullWidth
-        isLoading={isSubmitting}
-      >
-        PLACE BET
-      </Button>
-      
-      {/* Transaction in progress warning */}
-      {isSubmitting && (
-        <div className="mt-2 text-yellow-500 text-xs text-center px-2 py-1 bg-yellow-900/30 border border-yellow-500/50 rounded">
-          <span className="font-bold">⚠️ IMPORTANT:</span> Please do not refresh or close this page during the transaction process.
-        </div>
+      {transactionStatus === 'idle' && (
+        <Button
+          onClick={handleSubmitBet}
+          disabled={!walletConnected || isSubmitting}
+        >
+          Place Bet
+        </Button>
       )}
       
-      {/* Error message */}
-      {error && (
+      {/* Transaction Status */}
+      <TransactionStatus 
+        status={transactionStatus}
+        txSignature={txSignature}
+        error={error || undefined}
+        retryCount={retryCount}
+        maxRetries={3}
+      />
+      
+      {/* Error message (only show if not showing in transaction status) */}
+      {error && transactionStatus === 'idle' && (
         <div className="mt-1 text-red-500 text-xs text-center">
           {error}
         </div>

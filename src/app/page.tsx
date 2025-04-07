@@ -2,7 +2,6 @@
 
 import React, { useEffect } from 'react';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
 import BattleArena from '../components/battle/BattleArena';
 import ChatRoom from '../components/chat/ChatRoom';
 import BettingPanel from '../components/betting/BettingPanel';
@@ -10,7 +9,7 @@ import BetsList from '../components/betting/BetsList';
 import BetPlacedPanel from '../components/betting/BetPlacedPanel';
 import CoinChart from '../components/chart/CoinChart';
 import { useMatch } from '../hooks/useMatch';
-import { useBetting } from '../hooks/useBetting';
+import { useBetting, TransactionStatusUpdate } from '../hooks/useBetting';
 import { useChartData as useChartDataHook } from '../hooks/useChartData';
 import { useWalletAuth } from '@/lib/context/WalletContext';
 import { initializeSocket, disconnectSocket } from '../services/socket';
@@ -21,38 +20,40 @@ import BetClaiming from '@/components/betting/BetClaiming';
 import BetRefund from '@/components/betting/BetRefund';
 import BetRefundFailed from '@/components/betting/BetRefundFailed';
 import BetLogo from '@/components/betting/BetLogo';
+import Link from 'next/link';
+import OnboardingModal from '@/components/OnboardingModal';
+import useOnboarding from '@/hooks/useOnboarding';
 
 export default function Home() {
   // Initialize socket connection
   useEffect(() => {
     initializeSocket();
+    
+    // Cleanup - disconnect socket
     return () => {
       disconnectSocket();
     };
   }, []);
+  
+  // Get wallet connection status
+  const { connected, isAuthenticated, walletAddress, balance, user } = useWalletAuth();
+  
+  // Get onboarding status
+  const { showOnboarding, completeOnboarding } = useOnboarding();
 
-  // Get match data
+  // Match data and loading state
   const { match, loading: matchLoading, gameMode } = useMatch();
-
-  // Get betting data for current match
-  const {
-    matchBets,
-    userBets,
+  
+  // Betting data
+  const { 
+    matchBets, 
+    loading: bettingLoading, 
     submitBet,
-    loading: bettingLoading
+    userBets,
   } = useBetting({ 
-    matchId: match?.id || '', 
-    gameMode 
+    matchId: match?.id || '',
+    gameMode: gameMode
   });
-
-  // Get wallet data with authentication
-  const {
-    connected,
-    walletAddress,
-    balance,
-    user,
-    isAuthenticated
-  } = useWalletAuth();
 
   // Get chart data for selected fighter
   const { 
@@ -80,7 +81,7 @@ export default function Home() {
   }, [connected]);
 
   // Handle placing a bet
-  const handlePlaceBet = async (fighterId: string, amount: number) => {
+  const handlePlaceBet = async (fighterId: string, amount: number, onTransactionUpdate?: (update: TransactionStatusUpdate) => void) => {
     if (!connected || !isAuthenticated) {
       console.error("User not authenticated");
       return;
@@ -105,8 +106,14 @@ export default function Home() {
       // Place bet using the new flow (on-chain transaction first, then save to backend)
       console.log(`Creating bet for fighter ${fighterId} with amount ${amount} SOL`);
       
-      // Trigger bet submission - passing in necessary data
-      const bet = await submitBet(walletAddress || '', amount, fighterId, match.matchAccountPubkey);
+      // Trigger bet submission - passing in necessary data along with transaction status update callback
+      const bet = await submitBet(
+        walletAddress || '', 
+        amount, 
+        fighterId, 
+        match.matchAccountPubkey,
+        onTransactionUpdate
+      );
       
       console.log('Bet placed successfully!', bet);
       
@@ -225,18 +232,16 @@ export default function Home() {
               </div>
               
               {/* Battle Arena (center) */}
-              <div className="col-span-6">
-                <div className="h-[450px]">
-                  <BattleArena
-                    fighter1={match?.fighter1 || null}
-                    fighter2={match?.fighter2 || null}
-                    gameMode={gameMode}
-                  />
-                </div>
+              <div className="col-span-6 h-full">
+                <BattleArena 
+                  fighter1={match?.fighter1 || null}
+                  fighter2={match?.fighter2 || null}
+                  gameMode={gameMode}
+                />
               </div>
               
               {/* Chat Room (right) */}
-              <div className="col-span-3 h-[450px]">
+              <div className="col-span-3 h-full">
                 <ChatRoom
                   walletAddress={walletAddress || ''}
                   connected={connected}
@@ -249,8 +254,10 @@ export default function Home() {
             <div className="grid grid-cols-12 gap-4">
               {/* Left Ad Banner */}
               <div className="col-span-3">
-                <div className="bg-black/50 border-2 border-primary h-40 flex items-center justify-center retro-container">
-                  <p className="text-white/70 text-sm pixel-pulse">SPACE AVAILABLE</p>
+                <div className="col-span-3">
+                  <Link href="https://discord.gg/Knnvu9zf5x" className="bg-black/50 border-2 border-primary h-40 flex items-center justify-center retro-container hover:bg-primary/50 transition-all duration-300" target="_blank" rel="noopener noreferrer">
+                      <p className="text-white/70 text-sm pixel-pulse">SPACE AVAILABLE</p>
+                  </Link>
                 </div>
               </div>
 
@@ -287,16 +294,20 @@ export default function Home() {
 
               {/* Right Ad Banner */}
               <div className="col-span-3">
-                <div className="bg-black/50 border-2 border-primary h-40 flex items-center justify-center retro-container">
-                  <p className="text-white/70 text-sm pixel-pulse">SPACE AVAILABLE</p>
-                </div>
+                <Link href="https://discord.gg/Knnvu9zf5x" className="bg-black/50 border-2 border-primary h-40 flex items-center justify-center retro-container hover:bg-primary/50 transition-all duration-300" target="_blank" rel="noopener noreferrer">
+                    <p className="text-white/70 text-sm pixel-pulse">SPACE AVAILABLE</p>
+                </Link>
               </div>
             </div>
           </div>
         )}
       </main>
       
-      <Footer />
+      {/* Onboarding modal for first-time users */}
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={completeOnboarding}
+      />
     </div>
   );
 }

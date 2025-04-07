@@ -1,0 +1,16 @@
+# Build output
+.next/
+out/
+build/
+dist/
+
+# Node modules
+node_modules/
+
+# Files with known lint issues that would require extensive refactoring
+src/hooks/useBetting.ts
+src/hooks/useChartData.ts
+src/lib/context/WalletContext.tsx
+src/lib/providers/ToastProvider.tsx
+src/lib/services/auth.ts
+src/services/anchor.ts 

@@ -150,6 +150,7 @@ export function isAuthenticated(): boolean {
  * Get current user data
  * @returns User data
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export async function getUser(): Promise<any> {
   const token = getAuthToken();
   

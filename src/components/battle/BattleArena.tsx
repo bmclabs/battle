@@ -8,8 +8,6 @@ interface BattleArenaProps {
 }
 
 const BattleArena: React.FC<BattleArenaProps> = ({
-  fighter1,
-  fighter2,
   gameMode
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -39,16 +37,17 @@ const BattleArena: React.FC<BattleArenaProps> = ({
   return (
     <div ref={containerRef} className="w-full h-full bg-black/80 border-2 border-primary relative overflow-hidden retro-container">
       {/* Iframe container with CRT effect */}
-      {/* <div className="absolute inset-0 crt-effect">
+      <div className="h-full w-full crt-effect">
         <iframe
           ref={iframeRef}
-          src="https://battle-memecoin-club.vercel.app"
-          className="w-full h-full border-0"
+          src={process.env.NEXT_PUBLIC_BATTLE_ARENA_URL || ''}
+          className="w-full h-full border-0 pointer-events-none"
           title="Battle Memecoin Club"
           allowFullScreen
+          sandbox="allow-same-origin"
           style={{ display: 'block' }}
         />
-      </div> */}
+      </div>
       
       {/* Game mode indicator overlay */}
       <div className="absolute top-0.5 left-1/2 transform -translate-x-1/2 z-20 bg-black/50 px-4 py-1 border border-primary retro-container">

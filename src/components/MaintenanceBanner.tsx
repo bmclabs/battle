@@ -27,8 +27,8 @@ const MaintenanceBanner: React.FC<MaintenanceBannerProps> = ({
         {scheduledTime && (
           <span className="text-sm">Scheduled for: {scheduledTime}</span>
         )}
-        <Link href="/maintenance" className="ml-2 underline text-black hover:text-white">
-          More info
+        <Link href="https://discord.gg/Knnvu9zf5x" className="ml-2 underline text-black hover:text-white" target="_blank" rel="noopener noreferrer">
+          Check out our Discord
         </Link>
       </div>
     </div>

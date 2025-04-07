@@ -1,5 +1,3 @@
-import { Bet } from "../types";
-
 // Format wallet address to show only first and last few characters
 export const formatWalletAddress = (address: string): string => {
   if (!address) return '';

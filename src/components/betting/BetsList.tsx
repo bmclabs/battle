@@ -2,14 +2,6 @@ import React from 'react';
 import { Fighter, GameMode, MatchBettingSummary } from '../../types';
 import { formatWalletAddress, formatSolAmount } from '../../utils';
 
-// Individual bet type for display
-interface BetDisplay {
-  walletAddress: string;
-  fighterName: string;
-  amount: string;
-  timestamp?: number;
-}
-
 interface BetsListProps {
   bets: MatchBettingSummary | null;
   fighter1: Fighter | null;

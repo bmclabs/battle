@@ -4,7 +4,6 @@ import React from 'react';
 import Button from './ui/Button';
 import { formatWalletAddress, formatSolAmount } from '../utils';
 import { useWalletAuth } from '@/lib/context/WalletContext';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 
 const WalletConnect: React.FC = () => {

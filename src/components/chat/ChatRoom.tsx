@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChatMessage, ChatUser } from '../../types';
 import { formatWalletAddress } from '../../utils';
 import Button from '../ui/Button';
 import { useChat } from '../../hooks/useChat';
@@ -19,6 +18,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [userScrolled, setUserScrolled] = useState(false);
   
   // Use the chat hook
   const { messages, users, error, sendMessage } = useChat({
@@ -39,15 +39,24 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
 
   // Handle scroll event
   const handleScroll = () => {
-    setAutoScroll(isNearBottom());
+    // Mark that user has manually scrolled
+    setUserScrolled(true);
+    
+    // Check if user has scrolled to the bottom
+    if (isNearBottom()) {
+      setAutoScroll(true);
+    } else {
+      setAutoScroll(false);
+    }
   };
 
-  // Auto-scroll to bottom when new messages arrive if autoScroll is true
+  // Auto-scroll when new messages arrive, but only if we're already at the bottom
+  // or if the user hasn't manually scrolled
   useEffect(() => {
-    if (autoScroll && messagesEndRef.current) {
+    if ((autoScroll || !userScrolled) && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, autoScroll]);
+  }, [messages, autoScroll, userScrolled]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +64,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     
     sendMessage(message);
     setMessage('');
-    setAutoScroll(true); // Enable auto-scroll when sending a message
+    // Enable auto-scroll when sending a message
+    setAutoScroll(true);
   };
 
   return (
@@ -68,7 +78,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-2 pixel-scrollbar"
+        className="flex-1 overflow-y-auto p-2 pixel-scrollbar relative"
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -81,21 +91,21 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                 key={msg.id} 
                 className={`p-1 rounded ${
                   msg.walletAddress === 'system'
-                    ? 'bg-gray-800/40 border-l-2 border-gray-500'
+                    ? 'bg-gray-800/40 border-l-2 border-gray-500 hidden'
                     : msg.walletAddress === walletAddress
-                      ? 'bg-primary/40 border-l-2 border-primary'
-                      : 'bg-primary/30 border-l-2 border-primary'
+                      ? 'bg-[#14F195]/10 border-l-2 border-[#14F195]'
+                      : 'bg-[#14F195]/25 border-l-2 border-[#14F195]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className={`text-xs font-bold ${
-                    msg.walletAddress === 'system' ? 'text-gray-400' : 'text-primary'
+                    msg.walletAddress === 'system' ? 'text-gray-400' : 'text-[#14F195]'
                   }`}>
                     {msg.walletAddress === 'system' 
                       ? 'SYSTEM' 
                       : formatWalletAddress(msg.walletAddress)}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-[10px] text-gray-500">
                     {new Date(msg.timestamp).toLocaleTimeString()}
                   </span>
                 </div>
@@ -105,14 +115,37 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
             <div ref={messagesEndRef} />
           </div>
         )}
+        
+        {/* Scroll to bottom button - only show when not at bottom and messages exist */}
+        {!autoScroll && messages.length > 0 && (
+          <button
+            onClick={() => {
+              setAutoScroll(true);
+              if (messagesEndRef.current) {
+                messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            className="absolute bottom-2 right-2 bg-primary/80 hover:bg-primary text-white rounded-full p-1 shadow-lg"
+            title="Scroll to latest messages"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </button>
+        )}
       </div>
       
       {/* Connected users */}
       {users.length > 0 && (
-        <div className="px-2 py-1 border-t border-primary bg-black/50">
+        <div className="px-2 py-1 border-t border-primary bg-black/50 flex items-center justify-between">
           <p className="text-gray-400 text-xs">
-            {users.length} user{users.length !== 1 ? 's' : ''} online
+            {users.length} user{users.length !== 1 ? 's' : ''}
           </p>
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-[#14F195] rounded-full animate-pulse mr-1 ml-4"></div>
+            <p className="text-gray-400 text-xs mr-4">online</p>
+          </div>
+          
         </div>
       )}
       

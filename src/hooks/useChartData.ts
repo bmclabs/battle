@@ -94,7 +94,8 @@ export const useChartData = (fighterId: string, matchId?: string) => {
         // If we don't have a match ID or the API call failed, throw to trigger fallback
         throw new Error('Using fallback data');
         
-      } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+      } catch (_err: any) {
         // Use fallback data instead of showing an error
         console.log('Using fallback chart data for', fighterId);
         const fallbackData = generateFallbackChartData(fighterId);

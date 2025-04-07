@@ -7,20 +7,37 @@ const BetPaused: React.FC = () => {
       
       <div className="flex-1 flex flex-col items-center justify-center gap-4">
         
-        <div className="text-white text-center">
+        <div className="text-white text-center text-sm">
           The battle has been temporarily paused due to network issues.
         </div>
         
         <div className="bg-black/50 border border-yellow-400 p-4 rounded-md text-center">
-          <p className="text-yellow-200 mb-2">Our team is working on it</p>
-          <p className="text-white text-sm mt-2">
+          <p className="text-yellow-200 mb-2 text-sm">Our team is working on it</p>
+          <p className="text-white text-xs mt-2">
             Your bets are safe and the match will resume shortly.
           </p>
         </div>
       </div>
+
+      <div className="text-white text-center mt-6 mb-4">
+        <div className="flex items-center justify-center gap-2">
+          <div
+            className="w-4 h-4 bg-white rounded-full animate-wave"
+            style={{ animationDelay: "0s" }}
+          ></div>
+          <div
+            className="w-4 h-4 bg-white rounded-full animate-wave"
+            style={{ animationDelay: "0.2s" }}
+          ></div>
+          <div
+            className="w-4 h-4 bg-white rounded-full animate-wave"
+            style={{ animationDelay: "0.4s" }}
+          ></div>
+        </div>
+      </div>
       
       <div className="mt-4 bg-black/50 p-2 text-center rounded-md">
-        <p className="text-gray-400 text-xs">
+        <p className="text-gray-400 text-[10px]">
           Please wait, the battle will automatically resume once the issue is resolved.
         </p>
       </div>

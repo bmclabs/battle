@@ -29,9 +29,10 @@ export const useChat = ({
 
   // Handle joining the chat room when connected
   useEffect(() => {
-    // Clear messages when disconnected
+    // Only clear messages when explicitly disconnected or unmounted
     if (!isConnected || !userId) {
-      setMessages([]);
+      // We'll keep messages in state to avoid clearing the chat history
+      // Just clear users since those are direct connections
       setUsers([]);
       return;
     }
@@ -62,7 +63,7 @@ export const useChat = ({
     cleanupFns.push(unsubscribeMessages);
     
     // Subscribe to users joining
-    const unsubscribeUserJoined = subscribeToUserJoined(({ userId, walletAddress }) => {
+    const unsubscribeUserJoined = subscribeToUserJoined(({ walletAddress }) => {
       console.log(`User joined: ${walletAddress}`);
       // Add notification message
       const joinMsg: ChatMessage = {
@@ -76,7 +77,7 @@ export const useChat = ({
     cleanupFns.push(unsubscribeUserJoined);
     
     // Subscribe to users leaving
-    const unsubscribeUserLeft = subscribeToUserLeft(({ userId, walletAddress }) => {
+    const unsubscribeUserLeft = subscribeToUserLeft(({ walletAddress }) => {
       console.log(`User left: ${walletAddress}`);
       // Add notification message
       const leaveMsg: ChatMessage = {
