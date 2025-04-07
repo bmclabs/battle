@@ -30,9 +30,24 @@ Create a `.env.local` file in the root directory with the following variables:
 # Solana Cluster Configuration
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
 
+# RPC Provider Configuration
+# Helius API key (REQUIRED for mainnet usage)
+NEXT_PUBLIC_HELIUS_API_KEY=your-helius-api-key
+
+# Solana Program IDs
+NEXT_PUBLIC_PROGRAM_ID=your-program-id
+
 # API Configuration
 NEXT_PUBLIC_API_URL=http://localhost:3080/api
 ```
+
+For production mainnet deployment, make sure to set:
+```
+NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta
+NEXT_PUBLIC_HELIUS_API_KEY=your-actual-helius-api-key
+```
+
+The application is configured to prioritize Helius RPC for mainnet connections to ensure the best performance and reliability.
 
 ## Getting Started
 
@@ -75,8 +90,7 @@ The application uses the following backend API endpoints for wallet authenticati
 
 ## Project Structure
 
-```
-battle-memecoin-club/
+```battle-memecoin-club/
 ├── public/            # Static assets
 ├── src/
 │   ├── app/           # Next.js app router

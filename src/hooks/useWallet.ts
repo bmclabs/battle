@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { LAMPORTS_PER_SOL, Connection, clusterApiUrl } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, Connection } from '@solana/web3.js';
 import { getChallenge, verifySignature, getCurrentUser, logout, signMessage } from '../services/auth';
+import { getBestRpcUrl } from '@/utils/network';
 
 interface User {
   id: string;
@@ -76,11 +77,11 @@ export const useWallet = () => {
     const fetchBalance = async () => {
       if (connected && publicKey) {
         try {
-          // Get network from environment variables
-          const networkEnv = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet';
+          // Use the best available RPC endpoint (prioritizing Helius for mainnet)
+          const endpoint = getBestRpcUrl();
           
           // Create a connection to the Solana cluster
-          const connection = new Connection(clusterApiUrl(networkEnv as 'devnet' | 'testnet' | 'mainnet-beta'), 'confirmed');
+          const connection = new Connection(endpoint, 'confirmed');
           const balance = await connection.getBalance(publicKey);
           setBalance(balance / LAMPORTS_PER_SOL);
         } catch (err) {
@@ -244,7 +245,7 @@ export const useWallet = () => {
       
       // Example pseudo-code for real implementation:
       /*
-      const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+      const connection = new Connection(getBestRpcUrl(), 'confirmed');
       
       // Create a transaction
       const transaction = new Transaction();

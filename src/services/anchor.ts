@@ -12,6 +12,7 @@ import {
   BN 
 } from '@coral-xyz/anchor';
 import { WalletContextState } from '@solana/wallet-adapter-react';
+import { getBestRpcUrl } from '@/utils/network';
 
 // Get program ID from environment variables
 const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID || '');
@@ -101,9 +102,8 @@ export async function placeBetOnChain(
 
   while (retryCount < MAX_RETRIES) {
     try {
-      // Get network from environment variables
-      const networkEnv = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet';
-      const endpoint = `https://api.${networkEnv}.solana.com`;
+      // Get the best available RPC endpoint (prioritizing Helius for mainnet)
+      const endpoint = getBestRpcUrl();
       
       // Create connection
       const connection = new Connection(endpoint, "confirmed");

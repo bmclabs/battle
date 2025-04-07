@@ -118,7 +118,7 @@ const TransactionStatus: React.FC<TransactionStatusProps> = ({
               <span className="text-xs break-all">{txSignature}</span>
               {status === 'confirmed' && (
                 <a 
-                  href={`https://explorer.solana.com/tx/${txSignature}?cluster=${process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet'}`}
+                  href={`https://explorer.solana.com/tx/${txSignature}`}
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="block mt-1 text-blue-400 underline text-xs"
