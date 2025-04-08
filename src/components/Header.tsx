@@ -15,7 +15,7 @@ const Header: React.FC<HeaderProps> = ({
     <header className={`w-full p-4 border-b border-primary bg-black/80 ${className || ''}`}>
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center h-16 relative">
-        <div className="w-64 h-16 relative">
+          <div className="w-64 h-16 relative flex items-center">
             <Image
               src="/logo/bmc-logo.gif"
               alt="Battle Memecoin Club"
@@ -23,9 +23,15 @@ const Header: React.FC<HeaderProps> = ({
               height={60}
               className="object-contain"
             />
-        </div>
+            <div className="relative">
+              <span className="ml-2 px-3 py-1 text-sm font-extrabold text-black bg-[#14F195] rounded-md">
+                BETA
+              </span>
+              <span className="absolute -bottom-2 right-10 w-2 h-2 text-[8px]">v0.1.0</span>
+            </div>
+          </div>
 
-          <div className="flex justify-center space-x-8 mb-2 -ml-10">
+          <div className="flex justify-center space-x-8 mb-2">
           <a 
             href="https://x.com/battlememecoin" 
             target="_blank" 

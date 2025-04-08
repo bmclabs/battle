@@ -1,5 +1,4 @@
 import { 
-  Connection, 
   PublicKey, 
   SystemProgram, 
   LAMPORTS_PER_SOL,
@@ -12,7 +11,7 @@ import {
   BN 
 } from '@coral-xyz/anchor';
 import { WalletContextState } from '@solana/wallet-adapter-react';
-import { getBestRpcUrl } from '@/utils/network';
+import { rpcService } from '@/lib/services/rpcService';
 
 // Get program ID from environment variables
 const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID || '');
@@ -43,7 +42,6 @@ export async function getHouseWalletPDA(): Promise<[PublicKey, number]> {
  * This is a fallback method if the automatic confirmation fails
  */
 async function manualConfirmTransaction(
-  connection: Connection,
   signature: string,
   maxAttempts = 60, // Up to 5 minutes (60 * 5 seconds)
   intervalMs = 5000 // 5 seconds between checks
@@ -52,7 +50,10 @@ async function manualConfirmTransaction(
   
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const status = await connection.getSignatureStatus(signature);
+      // Use rpcService to get transaction status with fallback
+      const status = await rpcService.withFallback(
+        connection => connection.getSignatureStatus(signature)
+      );
       
       if (status.value?.confirmationStatus === 'confirmed' || 
           status.value?.confirmationStatus === 'finalized') {
@@ -102,11 +103,8 @@ export async function placeBetOnChain(
 
   while (retryCount < MAX_RETRIES) {
     try {
-      // Get the best available RPC endpoint (prioritizing Helius for mainnet)
-      const endpoint = getBestRpcUrl();
-      
-      // Create connection
-      const connection = new Connection(endpoint, "confirmed");
+      // Get connection from rpcService
+      const connection = rpcService.getConnection();
       
       // Create AnchorProvider with custom confirm options
       const provider = new AnchorProvider(
@@ -129,7 +127,7 @@ export async function placeBetOnChain(
       const transaction = new web3.Transaction();
       
       // Get recent blockhash with longer validity
-      const recentBlockhash = await connection.getLatestBlockhash('finalized');
+      const recentBlockhash = await rpcService.getRecentBlockhash();
       transaction.recentBlockhash = recentBlockhash.blockhash;
       transaction.lastValidBlockHeight = recentBlockhash.lastValidBlockHeight;
       transaction.feePayer = wallet.publicKey;
@@ -219,7 +217,7 @@ export async function placeBetOnChain(
             const txSignature = signatureMatch[1];
             
             // Try to manually confirm the transaction
-            const confirmed = await manualConfirmTransaction(connection, txSignature);
+            const confirmed = await manualConfirmTransaction(txSignature);
             if (confirmed) {
               console.log(`Manually confirmed transaction: ${txSignature}`);
               return txSignature;

@@ -33,6 +33,17 @@ body {
   background-position: 0 0, 0 0;
 }
 
+/* Mobile blocker styles */
+@media (max-width: 1023px) {
+  body {
+    overflow: hidden;
+  }
+  
+  .desktop-only-app {
+    display: none;
+  }
+}
+
 /* Pixel Art Styling */
 .pixel-border {
   border-style: solid;

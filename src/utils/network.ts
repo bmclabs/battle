@@ -2,9 +2,13 @@
  * Network and RPC URL utility functions
  */
 
-// Get current cluster from environment variables
-export const getCurrentCluster = (): string => {
-  return process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import { clusterApiUrl } from '@solana/web3.js';
+
+// Get the current Solana cluster from environment variables
+export const getCurrentCluster = (): WalletAdapterNetwork => {
+  return (process.env.NEXT_PUBLIC_SOLANA_NETWORK as WalletAdapterNetwork) || 
+    WalletAdapterNetwork.Devnet;
 };
 
 // Get RPC URL for Helius
@@ -18,7 +22,7 @@ export const getHeliusRpcUrl = (): string | null => {
   if (cluster === 'mainnet-beta') {
     return `https://mainnet.helius-rpc.com/?api-key=${apiKey}`;
   } else if (cluster === 'devnet') {
-    return `https://api.devnet.solana.com`;
+    return `https://devnet.helius-rpc.com/?api-key=${apiKey}`;
   }
   return null;
 };
@@ -54,37 +58,57 @@ export const getCustomRpcUrl = (): string | null => {
   return null;
 };
 
-// Get the best available RPC URL
-export const getBestRpcUrl = (): string => {
+/**
+ * Get RPC endpoints with priority
+ * @returns Array of RPC endpoints in priority order
+ */
+export const getRpcEndpoints = (): string[] => {
   const cluster = getCurrentCluster();
+  const endpoints: string[] = [];
   
-  if (cluster === 'mainnet-beta') {
-    // For mainnet, always prioritize Helius and never fall back to default endpoint
-    const heliusUrl = getHeliusRpcUrl();
-    if (heliusUrl) return heliusUrl;
-    
-    // If Helius is not available, try custom URL
-    const customUrl = getCustomRpcUrl();
-    if (customUrl) return customUrl;
-    
-    // If custom URL is not available, try QuickNode
-    const quickNodeUrl = getQuickNodeRpcUrl();
-    if (quickNodeUrl) return quickNodeUrl;
-    
-    // If no valid RPC endpoint is available, throw an error
-    throw new Error('No valid RPC endpoint available for mainnet. Please configure NEXT_PUBLIC_HELIUS_API_KEY.');
-  } else {
-    // For devnet, we can still use fallbacks
-    const heliusUrl = getHeliusRpcUrl();
-    if (heliusUrl) return heliusUrl;
-    
-    const customUrl = getCustomRpcUrl();
-    if (customUrl) return customUrl;
-    
-    const quickNodeUrl = getQuickNodeRpcUrl();
-    if (quickNodeUrl) return quickNodeUrl;
-    
-    // Fallback to default Solana endpoint only for devnet
-    return `https://api.${cluster}.solana.com`;
+  // Add Helius RPC URL if available (highest priority)
+  const heliusRpc = getHeliusRpcUrl();
+  if (heliusRpc) {
+    endpoints.push(heliusRpc);
   }
+  
+  // Add custom RPC URL if available
+  const customRpc = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
+  if (customRpc) {
+    endpoints.push(customRpc);
+  }
+  
+  // Add QuickNode RPC URL if available
+  const quickNodeApiKey = process.env.NEXT_PUBLIC_QUICKNODE_API_KEY;
+  if (quickNodeApiKey && cluster === 'mainnet-beta') {
+    endpoints.push(`https://api.quicknode.com/solana/${quickNodeApiKey}`);
+  }
+  
+  // Add public RPC endpoints as fallbacks
+  if (cluster === 'mainnet-beta') {
+    endpoints.push(
+      'https://api.mainnet-beta.solana.com',
+      'https://solana-api.projectserum.com',
+      'https://rpc.ankr.com/solana'
+    );
+  } else if (cluster === 'devnet') {
+    endpoints.push(
+      'https://api.devnet.solana.com',
+      'https://devnet.genesysgo.net'
+    );
+  } else {
+    // Testnet or other networks
+    endpoints.push(clusterApiUrl(cluster));
+  }
+  
+  return endpoints;
+};
+
+/**
+ * Get the best RPC URL based on priority
+ * @returns The best available RPC URL
+ */
+export const getBestRpcUrl = (): string => {
+  const endpoints = getRpcEndpoints();
+  return endpoints[0] || clusterApiUrl(getCurrentCluster());
 }; 

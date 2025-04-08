@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import ClientWalletProvider from "../context/ClientWalletProvider";
 import { MaintenanceBannerWrapper } from "../components/MaintenanceBannerWrapper";
+import MobileBlocker from "@/components/MobileBlocker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,6 +24,11 @@ const pixelFont = Press_Start_2P({
 export const metadata: Metadata = {
   title: "Battle Memecoin Club",
   description: "A pixel art betting game where memecoins battle for supremacy",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1
+  }
 };
 
 export default function RootLayout({
@@ -38,6 +44,7 @@ export default function RootLayout({
       >
         <ClientWalletProvider>
           <MaintenanceBannerWrapper />
+          <MobileBlocker />
           {children}
         </ClientWalletProvider>
       </body>

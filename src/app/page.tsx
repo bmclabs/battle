@@ -127,7 +127,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-screen flex flex-col relative desktop-only-app">
       <Header />
       
       <main className="flex-1 container mx-auto p-4 z-10">

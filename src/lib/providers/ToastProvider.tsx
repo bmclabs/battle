@@ -30,6 +30,10 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [nextId, setNextId] = useState(1);
 
+  const hideToast = useCallback((id: number) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  }, []);
+
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' | 'warning') => {
     const newToast = { id: nextId, message, type };
     setToasts(prev => [...prev, newToast]);
@@ -39,11 +43,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     setTimeout(() => {
       hideToast(newToast.id);
     }, 5000);
-  }, [nextId]);
-
-  const hideToast = useCallback((id: number) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  }, []);
+  }, [nextId, hideToast]);
 
   return (
     <ToastContext.Provider value={{ toasts, showToast, hideToast }}>

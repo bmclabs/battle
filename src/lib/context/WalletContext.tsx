@@ -11,8 +11,9 @@ import {
   isAuthenticated as checkAuthentication,
   getUser
 } from '../services/auth';
-import { LAMPORTS_PER_SOL, Connection, clusterApiUrl } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useToast } from '../providers/ToastProvider';
+import { rpcService } from '../services/rpcService';
 
 interface User {
   id: string;
@@ -158,7 +159,7 @@ export const WalletAuthProvider: React.FC<{ children: ReactNode }> = ({ children
   }, [isClient, connected, walletAddress, isAuthenticated, isRequestingChallenge, showToast, isDisconnecting]);
 
   // Forward declaration of refreshUser function to use in effects
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     if (!isClient || !isAuthenticated) return;
 
     try {
@@ -173,7 +174,7 @@ export const WalletAuthProvider: React.FC<{ children: ReactNode }> = ({ children
         signOut();
       }
     }
-  };
+  }, [isClient, isAuthenticated, signOut]);
 
   // Public function to retry getting challenge
   const retryChallenge = async () => {
@@ -219,12 +220,8 @@ export const WalletAuthProvider: React.FC<{ children: ReactNode }> = ({ children
     const fetchBalance = async () => {
       if (connected && publicKey) {
         try {
-          // Get network from environment variables
-          const networkEnv = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet';
-          
-          // Create a connection to the Solana cluster
-          const connection = new Connection(clusterApiUrl(networkEnv as 'devnet' | 'testnet' | 'mainnet-beta'), 'confirmed');
-          const balanceInLamports = await connection.getBalance(publicKey);
+          // Use rpcService instead of creating a direct connection
+          const balanceInLamports = await rpcService.getBalance(publicKey);
           setBalance(balanceInLamports / LAMPORTS_PER_SOL);
         } catch (err) {
           console.error('Failed to fetch balance:', err);

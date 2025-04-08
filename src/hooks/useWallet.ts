@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { LAMPORTS_PER_SOL, Connection } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { getChallenge, verifySignature, getCurrentUser, logout, signMessage } from '../services/auth';
-import { getBestRpcUrl } from '@/utils/network';
+import { rpcService } from '@/lib/services/rpcService';
 
 interface User {
   id: string;
@@ -77,12 +77,8 @@ export const useWallet = () => {
     const fetchBalance = async () => {
       if (connected && publicKey) {
         try {
-          // Use the best available RPC endpoint (prioritizing Helius for mainnet)
-          const endpoint = getBestRpcUrl();
-          
-          // Create a connection to the Solana cluster
-          const connection = new Connection(endpoint, 'confirmed');
-          const balance = await connection.getBalance(publicKey);
+          // Use rpcService to get balance with fallback
+          const balance = await rpcService.getBalance(publicKey);
           setBalance(balance / LAMPORTS_PER_SOL);
         } catch (err) {
           console.error('Failed to fetch balance:', err);
@@ -94,6 +90,10 @@ export const useWallet = () => {
     };
 
     fetchBalance();
+
+    // Set up interval to refresh balance every 30 seconds
+    const interval = setInterval(fetchBalance, 30000);
+    return () => clearInterval(interval);
   }, [connected, publicKey]);
 
   // Check for existing token in localStorage on mount
@@ -245,7 +245,7 @@ export const useWallet = () => {
       
       // Example pseudo-code for real implementation:
       /*
-      const connection = new Connection(getBestRpcUrl(), 'confirmed');
+      // Use rpcService instead of direct connection
       
       // Create a transaction
       const transaction = new Transaction();
@@ -282,11 +282,11 @@ export const useWallet = () => {
         })
       );
       
-      // Sign and send the transaction
-      const txSignature = await sendTransaction(transaction, connection);
+      // Sign and send the transaction using rpcService
+      const txSignature = await rpcService.sendTransaction(transaction, wallet);
       
-      // Wait for confirmation
-      await connection.confirmTransaction(txSignature, 'confirmed');
+      // Wait for confirmation using rpcService
+      await rpcService.confirmTransaction(txSignature);
       */
       
       // This is a mock implementation for development
