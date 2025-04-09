@@ -8,7 +8,7 @@ import { getCurrentCluster } from '@/utils/network';
 export async function POST(request: NextRequest) {
   try {
     // Get the QuickNode API key from environment variables (server-side only)
-    const apiKey = process.env.QUICKNODE_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_QUICKNODE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: 'QuickNode RPC service misconfigured' },

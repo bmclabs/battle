@@ -8,7 +8,7 @@ import { getCurrentCluster } from '@/utils/network';
 export async function POST(request: NextRequest) {
   try {
     // Get the Helius API key from environment variables (server-side only)
-    const apiKey = process.env.HELIUS_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_HELIUS_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: 'RPC service misconfigured' },
