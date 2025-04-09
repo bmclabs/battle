@@ -7,46 +7,82 @@ interface BattleArenaProps {
   gameMode: GameMode;
 }
 
+declare global {
+  interface Window {
+    Twitch?: {
+      Embed: {
+        new (elementId: string, options: any): {
+          getPlayer: () => any;
+          addEventListener: (event: string, callback: () => void) => void;
+        };
+        VIDEO_READY: string;
+      };
+    };
+  }
+}
+
 const BattleArena: React.FC<BattleArenaProps> = ({
   gameMode
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const embedRef = useRef<any>(null);
+  const embedContainerId = "twitch-embed-container";
 
-  // Adjust iframe size when container size changes
+  // Initialize Twitch embed when component mounts
   useEffect(() => {
-    if (!containerRef.current || !iframeRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        if (iframeRef.current) {
-          iframeRef.current.style.width = `${width}px`;
-          iframeRef.current.style.height = `${height}px`;
-        }
-      }
-    });
-
-    resizeObserver.observe(containerRef.current);
+    // Load Twitch embed script
+    const script = document.createElement('script');
+    script.src = 'https://embed.twitch.tv/embed/v1.js';
+    script.async = true;
+    script.onload = initTwitchEmbed;
+    document.body.appendChild(script);
 
     return () => {
-      resizeObserver.disconnect();
+      document.body.removeChild(script);
     };
   }, []);
 
+  // Initialize the Twitch player
+  const initTwitchEmbed = () => {
+    if (!window.Twitch) return;
+
+    // Extract the channel name from the URL in environment variable
+    let channel = 'battlememecoinclub'; // Default channel
+    const envUrl = process.env.NEXT_PUBLIC_BATTLE_ARENA_URL || '';
+    const channelMatch = envUrl.match(/channel=([^&]+)/);
+    if (channelMatch && channelMatch[1]) {
+      channel = channelMatch[1];
+    }
+
+    // Get the current hostname for the parent parameter
+    const hostname = window.location.hostname;
+    
+    // Create new Twitch Embed
+    embedRef.current = new window.Twitch.Embed(embedContainerId, {
+      width: '100%',
+      height: '100%',
+      channel: channel,
+      layout: 'video',
+      autoplay: true,
+      muted: false,
+      theme: 'dark',
+      interactive: false,
+      parent: [hostname, 'arena.battlememecoin.club', 'localhost'], // Include both current hostname and localhost
+    });
+
+    // Add event listener for when the player is ready
+    embedRef.current.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
+      console.log('The Twitch player is ready');
+    });
+  };
+
   return (
     <div ref={containerRef} className="w-full h-full bg-black/80 border-2 border-primary relative overflow-hidden retro-container">
-      {/* Iframe container with CRT effect */}
+      {/* Twitch embed container with CRT effect */}
       <div className="h-full w-full crt-effect">
-        <iframe
-          ref={iframeRef}
-          src={process.env.NEXT_PUBLIC_BATTLE_ARENA_URL || ''}
-          className="w-full h-full border-0 pointer-events-none"
-          title="Battle Memecoin Club"
-          allowFullScreen
-          sandbox="allow-same-origin"
-          style={{ display: 'block' }}
-        />
+        <div id={embedContainerId} className="w-full h-full"></div>
+        {/* Transparent overlay to prevent interaction with the Twitch player */}
+        <div className="absolute inset-0 z-10 w-full h-full" style={{ pointerEvents: 'auto' }}></div>
       </div>
       
       {/* Game mode indicator overlay */}
