@@ -11,6 +11,7 @@ interface CurrentMatchResponse {
   fighter2: string;
   status: string;
   timeStart: string;
+  winner: string;
   fighters: {
     name: string;
     coinId: number;
@@ -57,60 +58,46 @@ const mapStatusToGameMode = (status: string): GameMode => {
  * @returns Promise with the current match data
  */
 export const fetchCurrentMatch = async (): Promise<Match> => {
-  const url = `${API_BASE_URL}/v1/arena/current-match`;
-  
-  try {
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('No active match found');
-      }
-      throw new Error(`Failed to fetch current match: ${response.status} ${response.statusText}`);
+  const response = await fetch(`${API_BASE_URL}/v1/auth/current-match`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
     }
-    
-    const matchData: CurrentMatchResponse = await response.json();
-    
-    // Map fighters from the response to Fighter objects
-    const fighterMap: Record<string, Fighter> = {};
-    
-    matchData.fighters.forEach(fighter => {
-      // Create default placeholder stats if not provided
-      const stats = fighter.stats || {
-        attack: Math.round(Math.random() * 100),
-        defense: Math.round(Math.random() * 100),
-        speed: Math.round(Math.random() * 100),
-        health: 100
-      };
-      
-      // Create Fighter object
-      const fighterObj: Fighter = {
-        id: fighter.name.toUpperCase(), // Use lowercase name as ID
-        name: fighter.name,
-        image: fighter.image || `/fighters/${fighter.name.toLowerCase()}.png`, // Default image path
-        stats
-      };
-      
-      fighterMap[fighter.name.toUpperCase()] = fighterObj;
-    });
-    
-    // Convert response to Match interface
-    const match: Match = {
-      id: matchData.matchId,
-      matchAccountPubkey: matchData.matchAccountPubkey,
-      fighter1: fighterMap[matchData.fighter1],
-      fighter2: fighterMap[matchData.fighter2],
-      status: mapStatusToGameMode(matchData.status),
-      startTime: new Date(matchData.timeStart).getTime(),
-      endTime: null,
-      totalBetsFighter1: 0, // These will be populated from another source
-      totalBetsFighter2: 0,
-      winner: null
-    };
-    
-    return match;
-  } catch (error) {
-    console.error('Error fetching current match:', error);
-    throw error;
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('No active match found');
+    }
+    throw new Error(`Failed to fetch current match: ${response.status} ${response.statusText}`);
   }
+
+  const matchData: CurrentMatchResponse = await response.json();
+
+   // Map fighters from the response to Fighter objects
+   const fighterMap: Record<string, Fighter> = {};
+    
+   matchData.fighters.forEach(fighter => {
+     // Create Fighter object
+     const fighterObj: Fighter = {
+       name: fighter.name,
+       coinId: fighter.coinId
+     };
+     
+     fighterMap[fighter.name.toUpperCase()] = fighterObj;
+   });
+
+  // Convert response to Match interface
+  const match: Match = {
+    matchId: matchData.matchId,
+    matchAccountPubkey: matchData.matchAccountPubkey,
+    fighter1: matchData.fighter1,
+    fighter2: matchData.fighter2,
+    status: mapStatusToGameMode(matchData.status),
+    winner: matchData.winner,
+    startTime: new Date(matchData.timeStart).getTime(),
+    fighters: matchData.fighters
+  };
+  
+  return match;
 };

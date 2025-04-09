@@ -69,7 +69,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-black/80 border-2 border-primary retro-container overflow-hidden">
+    <div className="w-full h-[450px] flex flex-col bg-black/80 border-2 border-primary retro-container overflow-hidden">
       <div className="bg-primary p-2">
         <h2 className="text-white text-center text-lg">CHAT ROOM</h2>
       </div>

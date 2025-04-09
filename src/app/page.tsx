@@ -51,7 +51,7 @@ export default function Home() {
     submitBet,
     userBets,
   } = useBetting({ 
-    matchId: match?.id || '',
+    matchId: match?.matchId || '',
     gameMode: gameMode
   });
 
@@ -60,13 +60,13 @@ export default function Home() {
     chartData: fighter1ChartData, 
     loading: fighter1ChartLoading,
     error: fighter1ChartError
-  } = useChartDataHook(match?.fighter1?.id || '', match?.id);
+  } = useChartDataHook(match?.fighter1 || '', match?.matchId || '');
 
   const { 
     chartData: fighter2ChartData, 
     loading: fighter2ChartLoading,
     error: fighter2ChartError
-  } = useChartDataHook(match?.fighter2?.id || '', match?.id);
+  } = useChartDataHook(match?.fighter2 || '', match?.matchId || '');
 
   // Check if user has a placed bet
   const userPlacedBet = userBets.find(bet => bet.status === 'placed');
@@ -92,7 +92,7 @@ export default function Home() {
       return;
     }
     
-    if (!match?.id) {
+    if (!match?.matchId) {
       console.error("No active match");
       return;
     }
@@ -103,11 +103,11 @@ export default function Home() {
     }
     
     try {
-      // Place bet using the new flow (on-chain transaction first, then save to backend)
+      // Place bet using on-chain transaction first, then save to backend
       console.log(`Creating bet for fighter ${fighterId} with amount ${amount} SOL`);
       
-      // Trigger bet submission - passing in necessary data along with transaction status update callback
-      const bet = await submitBet(
+      // Trigger bet submission with transaction status update callback
+      await submitBet(
         walletAddress || '', 
         amount, 
         fighterId, 
@@ -115,14 +115,18 @@ export default function Home() {
         onTransactionUpdate
       );
       
-      console.log('Bet placed successfully!', bet);
-      
-      // Here you could add a success notification
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      console.error('Failed to place bet:', errorMessage);
       
-      // Here you could add an error notification to the UI
+      // Silent handling of user cancellation and already placed bet errors
+      // These are handled in the UI via the transaction status callbacks
+      if (errorMessage.includes('cancelled by user') || 
+          errorMessage.includes('User rejected') ||
+          errorMessage.includes('already placed a bet')) {
+        return;
+      }
+      
+      console.error('Failed to place bet:', errorMessage);
     }
   };
 
@@ -164,8 +168,8 @@ export default function Home() {
                     <div className="h-full">
                       <BetPlacedPanel
                         bet={userPlacedBet}
-                        fighter1={match?.fighter1 || null}
-                        fighter2={match?.fighter2 || null}
+                        fighter1={match?.fighters.find(fighter => fighter.name === match?.fighter1) || null}
+                        fighter2={match?.fighters.find(fighter => fighter.name === match?.fighter2) || null}
                       />
                     </div>
                 )}
@@ -175,8 +179,8 @@ export default function Home() {
                  !userPlacedBet && 
                  !bettingLoading && (
                   <BettingPanel
-                    fighter1={match?.fighter1 || null}
-                    fighter2={match?.fighter2 || null}
+                    fighter1={match?.fighters.find(fighter => fighter.name === match?.fighter1) || null}
+                    fighter2={match?.fighters.find(fighter => fighter.name === match?.fighter2) || null}
                     gameMode={gameMode}
                     onPlaceBet={handlePlaceBet}
                     walletConnected={connected}
@@ -189,8 +193,8 @@ export default function Home() {
                   <div className="h-full">
                     <BetsList
                       bets={matchBets || null}
-                      fighter1={match?.fighter1 || null}
-                      fighter2={match?.fighter2 || null}
+                      fighter1={match?.fighters.find(fighter => fighter.name === match?.fighter1) || null}
+                      fighter2={match?.fighters.find(fighter => fighter.name === match?.fighter2) || null}
                       gameMode={gameMode}
                     />
                   </div>
@@ -200,8 +204,8 @@ export default function Home() {
                 {gameMode === GameMode.CLAIMING && !bettingLoading && (
                   <div className="h-full">
                     <BetClaiming
-                      fighter1={match?.fighter1 || null}
-                      fighter2={match?.fighter2 || null}
+                      fighter1={match?.fighters.find(fighter => fighter.name === match?.fighter1) || null}
+                      fighter2={match?.fighters.find(fighter => fighter.name === match?.fighter2) || null}
                       winnerId={match?.winner || null}
                       userBetFighterId={userPlacedBet?.fighterId || null}
                     />
@@ -212,8 +216,8 @@ export default function Home() {
                 {gameMode === GameMode.REFUND && !bettingLoading && (
                   <div className="h-full">
                     <BetRefund
-                      fighter1={match?.fighter1 || null}
-                      fighter2={match?.fighter2 || null}
+                      fighter1={match?.fighters.find(fighter => fighter.name === match?.fighter1) || null}
+                      fighter2={match?.fighters.find(fighter => fighter.name === match?.fighter2) || null}
                       userBetFighterId={userPlacedBet?.fighterId || null}
                     />
                   </div>
@@ -223,8 +227,8 @@ export default function Home() {
                 {gameMode === GameMode.REFUND_FAILED && !bettingLoading && (
                   <div className="h-full">
                     <BetRefundFailed
-                      fighter1={match?.fighter1 || null}
-                      fighter2={match?.fighter2 || null}
+                      fighter1={match?.fighters.find(fighter => fighter.name === match?.fighter1) || null}
+                      fighter2={match?.fighters.find(fighter => fighter.name === match?.fighter2) || null}
                       userBetFighterId={userPlacedBet?.fighterId || null}
                     />
                   </div>
@@ -234,8 +238,8 @@ export default function Home() {
               {/* Battle Arena (center) */}
               <div className="col-span-6 h-full">
                 <BattleArena 
-                  fighter1={match?.fighter1 || null}
-                  fighter2={match?.fighter2 || null}
+                  fighter1={match?.fighters.find(fighter => fighter.name === match?.fighter1) || null}
+                  fighter2={match?.fighters.find(fighter => fighter.name === match?.fighter2) || null}
                   gameMode={gameMode}
                 />
               </div>
@@ -274,7 +278,7 @@ export default function Home() {
                 {/* Fighter 1 Chart */}
                 {(gameMode === GameMode.PREPARATION || gameMode === GameMode.BATTLE) && (
                   <CoinChart
-                    fighter={match?.fighter1 || null}
+                    fighter={match?.fighters.find(fighter => fighter.name === match?.fighter1) || null}
                     chartData={fighter1ChartData}
                     loading={fighter1ChartLoading}
                     error={fighter1ChartError}
@@ -284,7 +288,7 @@ export default function Home() {
                 {/* Fighter 2 Chart */}
                 {(gameMode === GameMode.PREPARATION || gameMode === GameMode.BATTLE) && (
                   <CoinChart
-                    fighter={match?.fighter2 || null}
+                    fighter={match?.fighters.find(fighter => fighter.name === match?.fighter2) || null}
                     chartData={fighter2ChartData}
                     loading={fighter2ChartLoading}
                     error={fighter2ChartError}

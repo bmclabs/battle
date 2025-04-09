@@ -24,9 +24,9 @@ const BetPlacedPanel: React.FC<BetPlacedPanelProps> = ({
   fighter2
 }) => {
   // Find the fighter that user bet on
-  const selectedFighter = bet.fighterName.toLowerCase() === fighter1?.id.toLowerCase() 
+  const selectedFighter = bet.fighterName.toLowerCase() === fighter1?.name.toLowerCase() 
     ? fighter1 
-    : bet.fighterName.toLowerCase() === fighter2?.id.toLowerCase() 
+    : bet.fighterName.toLowerCase() === fighter2?.name.toLowerCase() 
       ? fighter2 
       : null;
 
@@ -37,7 +37,7 @@ const BetPlacedPanel: React.FC<BetPlacedPanelProps> = ({
   };
 
   const selectedFighterColors = selectedFighter 
-    ? getFighterColors(selectedFighter.id) 
+    ? getFighterColors(selectedFighter.name) 
     : { border: '#6C757D', background: 'rgba(108, 117, 125, 0.2)' };
 
   return (

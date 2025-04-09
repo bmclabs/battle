@@ -50,8 +50,8 @@ const BetsList: React.FC<BetsListProps> = ({
   }) : [];
   
   // Get colors for fighters
-  const fighter1Color = getFighterColor(fighter1.id);
-  const fighter2Color = getFighterColor(fighter2.id);
+  const fighter1Color = getFighterColor(fighter1.name);
+  const fighter2Color = getFighterColor(fighter2.name);
   
   return (
     <div className="w-full h-[450px] bg-black/80 border-2 border-primary p-3 retro-container flex flex-col overflow-hidden">
@@ -86,7 +86,7 @@ const BetsList: React.FC<BetsListProps> = ({
             {/* Display sorted user bets */}
             {sortedUserBets.length > 0 && (
               sortedUserBets.map((bet, index) => {
-                const isFighter1 = fighter1 && bet.fighterName.toLowerCase() === fighter1.id.toLowerCase();
+                const isFighter1 = fighter1 && bet.fighterName.toLowerCase() === fighter1.name.toLowerCase();
                 const fighterColor = isFighter1 ? fighter1Color : fighter2Color;
                 
                 return (
@@ -114,7 +114,7 @@ const BetsList: React.FC<BetsListProps> = ({
             
             {/* If no user bets, show summary data */}
             {!sortedUserBets.length && bets.fighters && Object.entries(bets.fighters).map(([fighterName, data]) => {
-              const isFighter1 = fighter1 && fighterName.toLowerCase() === fighter1.id.toLowerCase();
+              const isFighter1 = fighter1 && fighterName.toLowerCase() === fighter1.name.toLowerCase();
               const fighterColor = isFighter1 ? fighter1Color : fighter2Color;
               
               return (

@@ -36,7 +36,7 @@ const BetClaiming: React.FC<BetClaimingProps> = ({
 
   // Find the winning fighter
   const winningFighter = winnerId 
-    ? fighter1?.id.toLowerCase() === winnerId.toLowerCase() 
+    ? fighter1?.name.toLowerCase() === winnerId.toLowerCase() 
       ? fighter1 
       : fighter2 
     : null;

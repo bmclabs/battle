@@ -82,6 +82,8 @@ export const initializeSocket = (): Socket => {
     // Get API URL from environment
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3080';
     
+    console.log('Initializing socket connection to:', apiUrl);
+    
     socket = io(apiUrl, {
       transports: ['websocket', 'polling'],
       withCredentials: true
@@ -89,11 +91,11 @@ export const initializeSocket = (): Socket => {
     
     // Log connection status
     socket.on(SocketEvents.CONNECT, () => {
-      console.log('Connected to WebSocket server');
+      console.log('Connected to WebSocket server, socket id:', socket?.id);
     });
     
-    socket.on(SocketEvents.DISCONNECT, () => {
-      console.log('Disconnected from WebSocket server');
+    socket.on(SocketEvents.DISCONNECT, (reason) => {
+      console.log('Disconnected from WebSocket server, reason:', reason);
     });
     
     socket.on(SocketEvents.ERROR, (error) => {
@@ -267,11 +269,24 @@ export const subscribeToMatchUpdates = (callback: (matchData: MatchData) => void
  */
 export const subscribeToChartData = (callback: (chartData: ChartData) => void): () => void => {
   const socket = getSocket();
-  socket.on(SocketEvents.GAME_CHART_DATA, callback);
+  console.log('Subscribing to chart data updates, socket connected:', socket.connected);
+  
+  // Handler for chart data events
+  const handleChartData = (data: ChartData) => {
+    console.log('Received chart data event:', {
+      matchId: data.matchId,
+      fighters: data.fighters.map(f => f.fighterName)
+    });
+    callback(data);
+  };
+  
+  // Subscribe to the event
+  socket.on(SocketEvents.GAME_CHART_DATA, handleChartData);
   
   // Return cleanup function
   return () => {
-    socket.off(SocketEvents.GAME_CHART_DATA, callback);
+    console.log('Unsubscribing from chart data updates');
+    socket.off(SocketEvents.GAME_CHART_DATA, handleChartData);
   };
 };
 

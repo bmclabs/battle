@@ -14,9 +14,9 @@ const BetRefundFailed: React.FC<BetRefundFailedProps> = ({
 }) => {
   // Get fighter the user bet on (if any)
   const userBetFighter = userBetFighterId 
-    ? fighter1?.id.toLowerCase() === userBetFighterId.toLowerCase()
+    ? fighter1?.name.toLowerCase() === userBetFighterId.toLowerCase()
       ? fighter1
-      : fighter2?.id.toLowerCase() === userBetFighterId.toLowerCase()
+      : fighter2?.name.toLowerCase() === userBetFighterId.toLowerCase()
         ? fighter2
         : null
     : null;

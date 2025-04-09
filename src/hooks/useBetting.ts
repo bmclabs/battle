@@ -9,9 +9,8 @@ import { TransactionExpiredTimeoutError } from '@solana/web3.js';
 
 // Type for transaction status to be passed to the UI
 export type TransactionStatusUpdate = {
-  status: 'preparing' | 'sending' | 'confirming' | 'retrying';
+  status: 'processing' | 'confirmed' | 'cancelled' | 'already-bet';
   signature?: string;
-  retryCount?: number;
 };
 
 // Map UserBet to Bet type
@@ -117,7 +116,10 @@ export const useBetting = ({ matchId, gameMode }: UseBettingProps) => {
     loadMatchBets();
   }, [matchId, gameMode]);
 
-  // Place a bet - new flow: on-chain transaction first, then save to backend
+  // Place a bet - improved flow to avoid WebSocket errors:
+  // 1. Only submit transaction to blockchain without waiting for confirmation (avoids WebSocket polling)
+  // 2. Save to backend with the transaction signature
+  // 3. Backend will verify the transaction status separately
   const submitBet = async (
     walletAddress: string, 
     amount: number, 
@@ -146,57 +148,45 @@ export const useBetting = ({ matchId, gameMode }: UseBettingProps) => {
       setPlacingBet(true);
       setError(null);
       
-      // Step 1: Place bet on-chain using Anchor program
-      console.log(`Placing bet on-chain for fighter ${fighterName} with amount ${amount} SOL`);
+      // Update UI with processing status
+      onTransactionUpdate?.({ status: 'processing' });
       
-      // Update UI with sending status
-      onTransactionUpdate?.({ status: 'sending' });
-      
+      // Step 1: Place the bet on-chain (only sends transaction, doesn't wait for confirmation)
       let transactionSignature;
-      let currentRetry = 0;
-      
-      const onRetry = (retryCount: number) => {
-        currentRetry = retryCount;
-        console.log(`Retrying transaction (attempt ${retryCount})...`);
-        onTransactionUpdate?.({ 
-          status: 'retrying', 
-          retryCount: retryCount
-        });
-      };
       
       try {
+        console.log('Initiating on-chain transaction...');
         transactionSignature = await placeBetOnChain(
           wallet,
           matchId,
           matchAccountPubkey,
           fighterName,
-          amount,
-          onRetry
+          amount
         );
-        
-        // If we get a signature back, update UI with confirming status 
-        if (transactionSignature) {
-          onTransactionUpdate?.({ 
-            status: 'confirming', 
-            signature: transactionSignature 
-          });
-        }
-        /* eslint-disable @typescript-eslint/no-explicit-any */
+        console.log('Transaction sent with signature:', transactionSignature);
       } catch (onChainError: any) {
         // Handle specific blockchain-related errors
         if (onChainError.message?.includes('Transaction timed out')) {
-          // This is our custom improved error message from anchor.ts
           throw new Error(onChainError.message);
         } else if (onChainError.message?.includes('insufficient funds')) {
           throw new Error('You don\'t have enough SOL in your wallet to place this bet');
-        } else if (onChainError.message?.includes('User rejected')) {
-          throw new Error('Transaction was cancelled');
+        } else if (onChainError.message?.includes('already placed a bet') || onChainError.code === 'ALREADY_BET') {
+          // Notify UI about AlreadyBet error
+          console.log('RPC AlreadyBet error detected in useBetting');
+          onTransactionUpdate?.({ status: 'already-bet' });
+          // Throw with consistent error message
+          throw new Error('You have already placed a bet in this match');
+        } else if (onChainError.message?.includes('cancelled by user') || onChainError.message?.includes('User rejected')) {
+          // Notify that the transaction was cancelled by the user via callback
+          onTransactionUpdate?.({ status: 'cancelled' });
+          // Then throw explicit cancellation error to abort the flow
+          throw new Error('cancelled by user');
         } else if (onChainError instanceof TransactionExpiredTimeoutError) {
-          throw new Error(`Transaction timed out after ${currentRetry} attempts. The Solana network may be congested. Please try again later.`);
+          throw new Error('Transaction timed out. The Solana network may be congested. Please try again later.');
         } else {
           // For other blockchain errors, log details but show a simpler message
           console.error('Blockchain transaction error:', onChainError);
-          throw new Error('Failed to complete the transaction on Solana. Please try again later.');
+          throw new Error('Failed to complete the transaction. Please try again later.');
         }
       }
       
@@ -204,9 +194,8 @@ export const useBetting = ({ matchId, gameMode }: UseBettingProps) => {
         throw new Error('Failed to place bet on-chain');
       }
       
-      console.log(`On-chain transaction completed: ${transactionSignature}`);
-      
-      // Step 2: Save bet to backend
+      // Step 2: Save bet to backend without waiting for blockchain confirmation
+      // The backend will verify the transaction status
       console.log('Saving bet to backend...');
       let betData;
       
@@ -217,21 +206,26 @@ export const useBetting = ({ matchId, gameMode }: UseBettingProps) => {
           matchId,
           fighterName,
           amount,
-          /* eslint-disable @typescript-eslint/no-explicit-any */
           transactionSignature
         );
       } catch (backendError: any) {
         console.error('Backend error when saving bet:', backendError);
         
-        // Even if backend fails, the blockchain transaction was completed
-        // Let the user know their funds are committed but we had trouble saving the record
-        throw new Error(
-          `Your bet was placed on the blockchain (TX: ${transactionSignature.slice(0, 8)}...), ` +
-          `but we had trouble recording it in our system. Please contact support with this transaction ID.`
-        );
+        // Check for already bet error from backend
+        if (backendError.message?.includes('already has a bet') || 
+            backendError.message?.includes('already placed a bet') ||
+            backendError.message?.includes('AlreadyBet')) {
+          onTransactionUpdate?.({ status: 'already-bet' });
+          throw new Error('You have already placed a bet in this match');
+        }
+        
+        throw new Error('Failed to record your bet. Please contact support with your transaction ID.');
       }
       
       console.log('Bet saved successfully:', betData);
+      
+      // Only notify UI about successful bet placement after backend confirms
+      onTransactionUpdate?.({ status: 'confirmed', signature: transactionSignature });
       
       // Convert to Bet type and add to local state
       const newBet: Bet = {
@@ -241,7 +235,7 @@ export const useBetting = ({ matchId, gameMode }: UseBettingProps) => {
         amount: betData.amount,
         fighterId: betData.fighterName,
         fighterName: betData.fighterName,
-        timestamp: Date.now(), // Use current timestamp for immediate feedback
+        timestamp: Date.now(), 
         status: betData.status,
         transactionSignature: betData.transactionSignature,
         claimed: false
@@ -255,7 +249,14 @@ export const useBetting = ({ matchId, gameMode }: UseBettingProps) => {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       console.error('Failed to place bet:', errorMessage);
       
-      // Here you could add an error notification to the UI
+      // If the error is a user cancellation, don't treat as an error
+      if (errorMessage.includes('cancelled by user') || errorMessage.includes('User rejected')) {
+        console.log('User cancelled the transaction - not treating as error');
+      } else {
+        // For other errors, set the error state
+        setError(errorMessage);
+      }
+      
       throw err;
     } finally {
       setPlacingBet(false);

@@ -1,5 +1,6 @@
 import { 
   Connection, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Commitment,
   PublicKey,
   BlockhashWithExpiryBlockHeight,
@@ -10,7 +11,7 @@ import {
   ParsedAccountData,
   RpcResponseAndContext
 } from '@solana/web3.js';
-import { getHeliusRpcUrl } from '@/utils/network';
+import { getHeliusRpcUrl, getRpcEndpoints } from '@/utils/network';
 
 // Default connection config
 const connectionConfig = {
@@ -47,11 +48,23 @@ export class RpcService {
     }
   ) {
     // Use provided endpoints or default to using Helius RPC URL (if available) + public Solana endpoints
+    const heliusUrl = getHeliusRpcUrl();
     this.rpcEndpoints = rpcEndpoints || [
-      getHeliusRpcUrl() || 'https://api.mainnet-beta.solana.com',
+      ...(heliusUrl ? [heliusUrl] : []),
+      'https://api.mainnet-beta.solana.com',
       'https://solana-api.projectserum.com',
       'https://rpc.ankr.com/solana'
     ];
+    
+    // Filter out any invalid URLs
+    this.rpcEndpoints = this.rpcEndpoints.filter(url => 
+      url && (url.startsWith('http://') || url.startsWith('https://'))
+    );
+    
+    // Make sure we have at least one endpoint
+    if (this.rpcEndpoints.length === 0) {
+      this.rpcEndpoints = ['https://api.mainnet-beta.solana.com'];
+    }
     
     // Create connections for each endpoint
     this.connections = this.rpcEndpoints.map(endpoint => 
@@ -139,7 +152,7 @@ export class RpcService {
           // If successful, update the current index for future operations
           this.currentConnectionIndex = index;
           return result;
-        } catch (error) {
+        } catch (error: unknown) {
           lastError = error as Error;
           retryCount++;
           
@@ -162,4 +175,40 @@ export class RpcService {
 export const rpcService = new RpcService();
 
 // Export the service class for testing or custom instances
-export default RpcService; 
+export default RpcService;
+
+/**
+ * Configure RPC client
+ * Always use HTTP for RPC calls to avoid WebSocket connection errors
+ */
+export const getRpcEndpoint = () => {
+  // Define fallback endpoints
+  const fallbackEndpoints = [
+    // Prefer Helius/custom endpoints from network utils
+    ...getRpcEndpoints(),
+    // Additional fallbacks
+    'https://rpc.ankr.com/solana',
+    'https://solana-api.projectserum.com',
+  ];
+
+  // Use the first available endpoint, ensuring it's HTTP/HTTPS
+  // Avoid WebSocket connections that might cause errors
+  return fallbackEndpoints.find(url => 
+    url && (url.startsWith('http://') || url.startsWith('https://'))
+  ) || 'https://api.mainnet-beta.solana.com';
+};
+
+/**
+ * Create connection with appropriate config
+ * Disable WebSocket subscriptions to prevent connection errors
+ */
+export const createConnection = () => {
+  const endpoint = getRpcEndpoint();
+  return new Connection(endpoint, {
+    commitment: 'confirmed',
+    disableRetryOnRateLimit: false,
+    confirmTransactionInitialTimeout: 60000,
+    // Disable WebSocket usage to prevent connection errors
+    wsEndpoint: undefined,
+  });
+}; 

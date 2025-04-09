@@ -24,14 +24,14 @@ const Header: React.FC<HeaderProps> = ({
               className="object-contain"
             />
             <div className="relative">
-              <span className="ml-2 px-3 py-1 text-sm font-extrabold text-black bg-[#14F195] rounded-md">
-                BETA
+              <span className="ml-2 py-1 text-xs font-extrabold text-[#14F195] rounded-md">
+                [BETA]
               </span>
               <span className="absolute -bottom-2 right-10 w-2 h-2 text-[8px]">v0.1.0</span>
             </div>
           </div>
 
-          <div className="flex justify-center space-x-8 mb-2">
+          <div className="flex justify-center space-x-8 mb-2 ml-10">
           <a 
             href="https://x.com/battlememecoin" 
             target="_blank" 

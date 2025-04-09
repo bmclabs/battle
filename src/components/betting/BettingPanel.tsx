@@ -38,9 +38,10 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   
   // New state for transaction status
-  const [transactionStatus, setTransactionStatus] = useState<'idle' | 'preparing' | 'sending' | 'confirming' | 'confirmed' | 'retrying' | 'failed'>('idle');
+  const [transactionStatus, setTransactionStatus] = useState<'idle' | 'processing' | 'confirmed' | 'cancelled' | 'failed'>('idle');
+  // txSignature use in handleTransactionUpdate and UI components
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [txSignature, setTxSignature] = useState<string | undefined>(undefined);
-  const [retryCount, setRetryCount] = useState<number>(0);
 
   // Predefined bet amounts
   const betOptions = [0.1, 0.5, 1, 5, 10, 25, 50, 100];
@@ -56,8 +57,8 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
     return FIGHTER_COLORS[lowerFighterId] || { border: '#6C757D', background: 'rgba(108, 117, 125, 0.2)' };
   };
 
-  const fighter1Colors = getFighterColors(fighter1.id);
-  const fighter2Colors = getFighterColors(fighter2.id);
+  const fighter1Colors = getFighterColors(fighter1.name);
+  const fighter2Colors = getFighterColors(fighter2.name);
 
   const handleSelectFighter = (fighterId: string) => {
     if (!walletConnected || isSubmitting) return;
@@ -75,7 +76,12 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
     // Only allow numbers and decimals
     if (/^\d*\.?\d*$/.test(value)) {
       setBetAmount(value);
-      setError(null);
+      // Check if amount is less than minimum required
+      if (value && parseFloat(value) < 0.05) {
+        setError('Minimum bet is 0.05 SOL');
+      } else {
+        setError(null);
+      }
       // Reset transaction status when changing amount
       if (transactionStatus !== 'idle') {
         setTransactionStatus('idle');
@@ -85,6 +91,13 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
   };
 
   const handleSelectBetAmount = (amount: number) => {
+    // Check minimum bet amount
+    if (amount < 0.05) {
+      setBetAmount(amount.toString());
+      setError('Minimum bet is 0.05 SOL');
+      return;
+    }
+    
     // Don't allow selecting amounts greater than wallet balance
     if (amount <= walletBalance) {
       setBetAmount(amount.toString());
@@ -116,6 +129,11 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
       return;
     }
 
+    if (amount < 0.05) {
+      setError('Minimum bet is 0.05 SOL');
+      return;
+    }
+
     if (amount > walletBalance) {
       setError('Insufficient balance');
       return;
@@ -125,50 +143,66 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
       setIsSubmitting(true);
       setError(null);
       
-      // Update transaction status to preparing
-      setTransactionStatus('preparing');
-      
-      // Short timeout to allow UI to update before potentially heavy transaction work
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Update status to sending
-      setTransactionStatus('sending');
+      // Update transaction status to processing
+      setTransactionStatus('processing');
       
       // Define the transaction update handler to update local UI state
       const handleTransactionUpdate = (update: TransactionStatusUpdate) => {
-        if (update.status === 'retrying' && update.retryCount !== undefined) {
-          setRetryCount(update.retryCount);
-          setTransactionStatus('retrying');
-        } else if (update.status === 'confirming' && update.signature) {
+        console.log('Transaction update:', update);
+        
+        // Important: This callback will be called exactly once for each state change
+        // rather than repeatedly polling. The transaction states are:
+        // - 'processing': Transaction is being prepared and submitted to the blockchain
+        // - 'confirmed': Transaction has been sent and saved to the backend
+        //                (no WebSocket polling for confirmation)
+        // - 'cancelled': User cancelled the transaction
+        // - 'already-bet': User has already placed a bet in this match
+        if (update.status === 'cancelled') {
+          setTransactionStatus('cancelled');
+          setIsSubmitting(false);
+          // Allow the user to submit again after cancellation
+          setTimeout(() => {
+            setTransactionStatus('idle');
+          }, 3000);
+        } else if (update.status === 'confirmed') {
+          // Set signature and status only once when backend confirms
           setTxSignature(update.signature);
-          setTransactionStatus('confirming');
+          setTransactionStatus('confirmed');
+          
+          // Reset form after successful bet
+          setTimeout(() => {
+            setBetAmount('');
+            setSelectedFighter(null);
+            setTransactionStatus('idle');
+            setTxSignature(undefined);
+          }, 3000);
+        } else if (update.status === 'already-bet') {
+          // Handle already bet error from RPC or backend
+          setError('You have already placed a bet in this match');
+          setTransactionStatus('failed');
+          setIsSubmitting(false);
         }
       };
       
-      // Pass the progress callback to the bet handler
+      // Call the place bet function once and wait for result
+      // The transaction is confirmed in the blockchain service, avoiding multiple RPC calls
       await onPlaceBet(selectedFighter, amount, handleTransactionUpdate);
-      
-      // If we get here, the transaction was successful
-      setTransactionStatus('confirmed');
-      
-      // Reset form after successful bet
-      setBetAmount('');
-      setSelectedFighter(null);
-      
-      // Keep the success message visible for a few seconds
-      setTimeout(() => {
-        if (transactionStatus === 'confirmed') {
-          setTransactionStatus('idle');
-          setTxSignature(undefined);
-        }
-      }, 5000);
-      
     } catch (err) {
       // Handle errors and show appropriate message
       const errorMessage = err instanceof Error ? err.message : 'Failed to place bet. Please try again.';
-      setError(errorMessage);
-      setTransactionStatus('failed');
-      console.error(err);
+      
+      // If the user cancelled the transaction, don't show as an error
+      if (errorMessage.includes('cancelled by user') || errorMessage.includes('User rejected')) {
+        console.log('User cancelled the transaction');
+        // The cancelled status was already set in the handleTransactionUpdate callback
+      } else if (errorMessage.includes('already placed a bet')) {
+        // Handle "already bet" error
+        setError('You have already placed a bet in this match');
+        setTransactionStatus('failed');
+      } else {
+        setError(errorMessage);
+        setTransactionStatus('failed');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -181,17 +215,17 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
       {/* Fighter selection */}
       <div className="grid grid-cols-2 gap-2 mb-2">
         <button
-          onClick={() => handleSelectFighter(fighter1.id)}
+          onClick={() => handleSelectFighter(fighter1.name)}
           className={`
             py-2 px-3 
-            ${selectedFighter === fighter1.id ? 'font-bold' : 'font-normal'}
+            ${selectedFighter === fighter1.name ? 'font-bold' : 'font-normal'}
             ${!walletConnected || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#14F195]'}
             text-white text-sm
             border-2 transition-all rounded-md
           `}
           style={{
             borderColor: fighter1Colors.border,
-            backgroundColor: selectedFighter === fighter1.id ? fighter1Colors.background : 'transparent',
+            backgroundColor: selectedFighter === fighter1.name ? fighter1Colors.background : 'transparent',
           }}
           disabled={!walletConnected || isSubmitting}
         >
@@ -199,17 +233,17 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
         </button>
         
         <button
-          onClick={() => handleSelectFighter(fighter2.id)}
+          onClick={() => handleSelectFighter(fighter2.name)}
           className={`
             py-2 px-3 
-            ${selectedFighter === fighter2.id ? 'font-bold' : 'font-normal'}
+            ${selectedFighter === fighter2.name ? 'font-bold' : 'font-normal'}
             ${!walletConnected || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#14F195]'}
             text-white text-sm
             border-2 transition-all rounded-md
           `}
           style={{
             borderColor: fighter2Colors.border,
-            backgroundColor: selectedFighter === fighter2.id ? fighter2Colors.background : 'transparent',
+            backgroundColor: selectedFighter === fighter2.name ? fighter2Colors.background : 'transparent',
           }}
           disabled={!walletConnected || isSubmitting}
         >
@@ -275,19 +309,17 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
       {transactionStatus === 'idle' && (
         <Button
           onClick={handleSubmitBet}
-          disabled={!walletConnected || isSubmitting}
+          disabled={!walletConnected || isSubmitting || !selectedFighter || !betAmount || parseFloat(betAmount) < 0.05}
+          className={`${!walletConnected || isSubmitting || !selectedFighter || !betAmount || parseFloat(betAmount) < 0.05 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#14F195]'}`}
         >
           Place Bet
         </Button>
       )}
       
       {/* Transaction Status */}
-      <TransactionStatus 
+      <TransactionStatus
         status={transactionStatus}
-        txSignature={txSignature}
         error={error || undefined}
-        retryCount={retryCount}
-        maxRetries={3}
       />
       
       {/* Error message (only show if not showing in transaction status) */}

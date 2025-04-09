@@ -9,8 +9,7 @@ import {
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { WalletAuthProvider } from '../context/WalletContext';
 import WalletAuthModalController from './WalletAuthModalController';
-import { clusterApiUrl } from '@solana/web3.js';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import { getBestRpcUrl } from '@/utils/network';
 
 // Default styles from Solana wallet adapter
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -20,16 +19,12 @@ interface WalletProviderContentProps {
 }
 
 export default function WalletProviderContent({ children }: WalletProviderContentProps) {
-    // Get the network from environment variables
-    const networkEnv = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet';
-    const network = networkEnv === 'mainnet-beta' 
-        ? WalletAdapterNetwork.Mainnet 
-        : networkEnv === 'testnet' 
-            ? WalletAdapterNetwork.Testnet 
-            : WalletAdapterNetwork.Devnet;
+    // Network settings for devnet/mainnet
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const network = process.env.NEXT_PUBLIC_NETWORK || 'mainnet-beta';
     
-    // Get endpoint for the selected network
-    const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+    // Get endpoint using our secure RPC utility that protects API keys
+    const endpoint = useMemo(() => getBestRpcUrl(), []);
 
     // Initialize the supported wallet adapters
     const wallets = useMemo(() => [

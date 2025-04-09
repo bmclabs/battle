@@ -11,28 +11,19 @@ export enum GameMode {
 }
 
 export interface Fighter {
-  id: string;
   name: string;
-  image: string;
-  stats: {
-    attack: number;
-    defense: number;
-    speed: number;
-    health: number;
-  };
+  coinId: number;
 }
 
 export interface Match {
-  id: string;
+  matchId: string;
   matchAccountPubkey?: string;
-  fighter1: Fighter;
-  fighter2: Fighter;
-  totalBetsFighter1: number;
-  totalBetsFighter2: number;
+  fighter1: string;
+  fighter2: string;
   winner: string | null;
   status: GameMode;
   startTime: number;
-  endTime: number | null;
+  fighters: { name: string; coinId: number }[];
 }
 
 // Betting types

@@ -18,23 +18,6 @@ const BetPaused: React.FC = () => {
           </p>
         </div>
       </div>
-
-      <div className="text-white text-center mt-6 mb-4">
-        <div className="flex items-center justify-center gap-2">
-          <div
-            className="w-4 h-4 bg-white rounded-full animate-wave"
-            style={{ animationDelay: "0s" }}
-          ></div>
-          <div
-            className="w-4 h-4 bg-white rounded-full animate-wave"
-            style={{ animationDelay: "0.2s" }}
-          ></div>
-          <div
-            className="w-4 h-4 bg-white rounded-full animate-wave"
-            style={{ animationDelay: "0.4s" }}
-          ></div>
-        </div>
-      </div>
       
       <div className="mt-4 bg-black/50 p-2 text-center rounded-md">
         <p className="text-gray-400 text-[10px]">

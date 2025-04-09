@@ -32,7 +32,9 @@ export default function TokenBalance({
   }
 
   // Format balance with specified decimal places
-  const formattedBalance = balance.toFixed(decimals);
+  const formattedBalance = typeof balance === 'number' 
+    ? balance.toFixed(decimals)
+    : parseFloat(String(balance)).toFixed(decimals);
   
   return (
     <span className={className}>

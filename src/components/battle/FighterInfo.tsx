@@ -1,5 +1,4 @@
 import React from 'react';
-import Image from 'next/image';
 import { Fighter } from '../../types';
 
 interface FighterInfoProps {
@@ -16,14 +15,6 @@ const FighterInfo: React.FC<FighterInfoProps> = ({
   return (
     <div className={`bg-black/80 border-2 ${isPrimary ? 'border-primary' : 'border-secondary'} p-4 retro-container`}>
       <div className="flex items-center space-x-4">
-        <div className="relative w-16 h-16 pixel-pulse">
-          <Image
-            src={fighter.image}
-            alt={fighter.name}
-            fill
-            className="object-contain pixelated"
-          />
-        </div>
         
         <div>
           <h3 className="text-white text-lg font-bold">{fighter.name}</h3>

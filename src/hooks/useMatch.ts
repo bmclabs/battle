@@ -61,7 +61,7 @@ export const useMatch = () => {
       console.log('Received match update:', matchData);
       
       // If we have an existing match, update it
-      if (match && match.id === matchData.matchId) {
+      if (match && match.matchId === matchData.matchId) {
         // Update the match with new data
         setMatch(prevMatch => {
           if (!prevMatch) return prevMatch;
@@ -101,7 +101,7 @@ export const useMatch = () => {
       console.log(`Match ${matchId} status changed to: ${status}`);
       
       // Only update if this is our current match
-      if (match && match.id === matchId) {
+      if (match && match.matchId === matchId) {
         // Convert status string to GameMode enum
         const newGameMode = status as GameMode;
         setGameMode(newGameMode);
@@ -132,7 +132,7 @@ export const useMatch = () => {
       console.log(`Match ${matchId} result: winner=${winner}, status=${status}`);
       
       // Only update if this is our current match
-      if (match && match.id === matchId) {
+      if (match && match.matchId === matchId) {
         // Convert status string to GameMode enum
         const newGameMode = status as GameMode;
         setGameMode(newGameMode);

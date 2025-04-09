@@ -103,6 +103,11 @@ const CoinChart: React.FC<CoinChartProps> = ({
   }
 
   const formatNumber = (num: number): string => {
+    // Handle undefined or null
+    if (num === undefined || num === null) {
+      return '$0';
+    }
+    
     // For very small numbers, count zeros after decimal and use as exponent
     if (num > 0 && num < 0.01) {
       // Convert to string and count leading zeros after decimal point
@@ -187,7 +192,7 @@ const CoinChart: React.FC<CoinChartProps> = ({
       },
       tooltip: {
         backgroundColor: '#000000',
-        borderColor: fighter.id === 'pepe' ? '#FF69B4' : '#14F195',
+        borderColor: fighter.name.toLowerCase() === 'pepe' ? '#FF69B4' : '#14F195',
         borderWidth: 2,
         titleFont: {
           family: '"Press Start 2P", cursive',
@@ -200,6 +205,11 @@ const CoinChart: React.FC<CoinChartProps> = ({
         callbacks: {
           label: function(context: {parsed: {y: number}}) {
             const value = context.parsed.y;
+            
+            // Ensure value is a number before processing
+            if (typeof value !== 'number') {
+              return 'Price: $0';
+            }
             
             // Format the price using the same exponent notation
             if (value > 0 && value < 0.01) {
@@ -276,8 +286,13 @@ const CoinChart: React.FC<CoinChartProps> = ({
             size: 8
           },
           callback: function(value) {
+            // Ensure value is a number
+            if (typeof value !== 'number') {
+              return '$0';
+            }
+            
             // For very small numbers, count zeros after decimal and use as exponent
-            if (typeof value === 'number' && value > 0 && value < 0.01) {
+            if (value > 0 && value < 0.01) {
               // Convert to string and count leading zeros after decimal point
               const numStr = value.toString();
               const decimalParts = numStr.split('.');

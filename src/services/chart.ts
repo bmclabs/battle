@@ -49,22 +49,37 @@ export const fetchFighterPrices = async (
   url.searchParams.append('interval', interval);
   url.searchParams.append('count', count.toString());
 
+  console.log('Fetching fighter prices from:', url.toString());
+
   try {
     // Make the request with the API key in the header
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'x-arena-api-key': ARENA_SECRET_KEY || '',
       },
+      credentials: 'include'
     });
 
+    console.log('Fighter prices response status:', response.status);
+    
     if (!response.ok) {
       const errorBody = await response.text();
+      console.error('Error fetching fighter prices:', {
+        status: response.status,
+        url: response.url,
+        body: errorBody
+      });
       throw new Error(`Failed to fetch fighter prices: ${response.status} ${response.statusText} - ${errorBody}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log('Fighter prices data received for fighters:', 
+      data.historicalData?.map((f: FighterPriceData) => f.fighter)?.join(', ') || 'No data');
+    
+    return data;
   } catch (error) {
     console.error('Error fetching fighter prices:', error);
     throw error;

@@ -1,42 +1,60 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/lib/providers/ToastProvider';
 
-type TransactionStatus = 'idle' | 'preparing' | 'sending' | 'confirming' | 'confirmed' | 'retrying' | 'failed';
+// Simplified transaction status that only tracks essential states
+type TransactionStatus = 'idle' | 'processing' | 'confirmed' | 'cancelled' | 'failed';
 
 interface TransactionStatusProps {
   status: TransactionStatus;
-  txSignature?: string;
   error?: string;
-  retryCount?: number;
-  maxRetries?: number;
 }
 
 /**
- * A component to display the status of an ongoing blockchain transaction
- * This provides users with real-time feedback during the transaction lifecycle
+ * A simplified component to display the status of an ongoing transaction
  */
 const TransactionStatus: React.FC<TransactionStatusProps> = ({
   status,
-  txSignature,
-  error,
-  retryCount = 0,
-  maxRetries = 3
+  error
 }) => {
   const { showToast } = useToast();
-  const [showDetails, setShowDetails] = useState(false);
   
-  // Show toast notifications for important status changes
+  // Track the last toast shown to prevent duplicate toasts
+  const [lastToastStatus, setLastToastStatus] = useState<TransactionStatus | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [prevStatus, setPrevStatus] = useState<TransactionStatus | null>(null);
+  const isAlreadyBetErrorRef = useRef<boolean>(false);
+  
+  // Check if error is about already placed bet
   useEffect(() => {
-    if (status === 'confirmed') {
-      showToast('Transaction confirmed successfully!', 'success');
-    } else if (status === 'failed' && error) {
-      showToast(`Transaction failed: ${error}`, 'error');
-    } else if (status === 'retrying') {
-      showToast(`Retrying transaction (attempt ${retryCount}/${maxRetries})...`, 'warning');
+    if (error && (error.includes('already placed a bet') || error.includes('already has a bet'))) {
+      isAlreadyBetErrorRef.current = true;
+    } else if (!error) {
+      isAlreadyBetErrorRef.current = false;
     }
-  }, [status, error, retryCount, maxRetries, showToast]);
+  }, [error]);
+  
+  // Track status changes to show toasts
+  useEffect(() => {
+    // Track the previous status to detect changes
+    setPrevStatus(status);
+    
+    // Only show one toast per status change to avoid duplicates
+    if (status !== 'idle' && lastToastStatus !== status) {
+      if (status === 'processing') {
+        showToast('Processing transaction...', 'info');
+      } else if (status === 'confirmed') {
+        showToast('Transaction confirmed!', 'success');
+      } else if (status === 'cancelled') {
+        showToast('Transaction cancelled', 'info');
+      } else if (status === 'failed') {
+        showToast(error || 'Transaction failed', 'error');
+      }
+      
+      setLastToastStatus(status);
+    }
+  }, [status, error, lastToastStatus, showToast]);
 
   // Don't render anything in idle state
   if (status === 'idle') {
@@ -44,31 +62,35 @@ const TransactionStatus: React.FC<TransactionStatusProps> = ({
   }
 
   const getStatusMessage = () => {
+    if (isAlreadyBetErrorRef.current) {
+      return 'You already have a bet in this match';
+    }
+    
     switch (status) {
-      case 'preparing':
-        return 'Preparing transaction...';
-      case 'sending':
-        return 'Sending transaction...';
-      case 'confirming':
-        return 'Waiting confirmation...';
+      case 'processing':
+        return 'Processing transaction...';
       case 'confirmed':
-        return 'Transaction confirmed!';
-      case 'retrying':
-        return `Retrying transaction (${retryCount}/${maxRetries})...`;
+        return 'Bet placed successfully!';
+      case 'cancelled':
+        return 'Transaction cancelled';
       case 'failed':
-        return 'Transaction failed';
+        return error || 'Transaction failed';
       default:
         return 'Processing transaction...';
     }
   };
 
   const getStatusColor = () => {
+    if (isAlreadyBetErrorRef.current) {
+      return 'text-red-500 border-red-500 bg-red-900/30';
+    }
+    
     switch (status) {
       case 'confirmed':
         return 'text-green-500 border-green-500 bg-green-900/30';
       case 'failed':
         return 'text-red-500 border-red-500 bg-red-900/30';
-      case 'retrying':
+      case 'cancelled':
         return 'text-yellow-500 border-yellow-500 bg-yellow-900/30';
       default:
         return 'text-blue-500 border-blue-500 bg-blue-900/30';
@@ -76,13 +98,17 @@ const TransactionStatus: React.FC<TransactionStatusProps> = ({
   };
 
   const getStatusIcon = () => {
+    if (isAlreadyBetErrorRef.current) {
+      return '❌';
+    }
+    
     switch (status) {
       case 'confirmed':
         return '✅';
       case 'failed':
         return '❌';
-      case 'retrying':
-        return '🔄';
+      case 'cancelled':
+        return '⚠️';
       default:
         return (
           <svg className="animate-spin h-4 w-4 text-white inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -100,61 +126,7 @@ const TransactionStatus: React.FC<TransactionStatusProps> = ({
           <span className="mr-2">{getStatusIcon()}</span>
           <span className='text-[10px]'>{getStatusMessage()}</span>
         </div>
-        {(txSignature || error) && (
-          <button 
-            onClick={() => setShowDetails(!showDetails)}
-            className="text-xs underline focus:outline-none"
-          >
-            {showDetails ? 'Hide Details' : 'Show Details'}
-          </button>
-        )}
       </div>
-
-      {showDetails && (
-        <div className="mt-2 pt-2 border-t border-gray-600">
-          {txSignature && (
-            <div className="mb-1">
-              <span className="font-bold block text-xs">Transaction ID:</span>
-              <span className="text-xs break-all">{txSignature}</span>
-              {status === 'confirmed' && (
-                <a 
-                  href={`https://explorer.solana.com/tx/${txSignature}`}
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="block mt-1 text-blue-400 underline text-xs"
-                >
-                  View on Solana Explorer
-                </a>
-              )}
-            </div>
-          )}
-          
-          {error && (
-            <div className="mt-1">
-              <span className="font-bold block text-xs">Error:</span>
-              <span className="text-xs break-all">{error}</span>
-            </div>
-          )}
-          
-          {status === 'failed' && (
-            <div className="mt-2 text-xs">
-              <p>What to do now:</p>
-              <ul className="list-disc list-inside mt-1">
-                <li>Check your wallet balance</li>
-                <li>Wait a few minutes and try again</li>
-                <li>If the problem persists, contact support</li>
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-      
-      {/* Warning message for ongoing transactions */}
-      {(status === 'sending' || status === 'confirming' || status === 'retrying') && (
-        <div className="mt-2 p-1 bg-yellow-900/20 border border-yellow-500/30 rounded text-yellow-500 text-[10px]">
-          <span className="font-bold">⚠️ IMPORTANT:</span> Please do not refresh or close this page during the transaction process.
-        </div>
-      )}
     </div>
   );
 };
