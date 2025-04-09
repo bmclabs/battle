@@ -45,7 +45,7 @@ export const fetchFighterPrices = async (
   count: number = 24
 ): Promise<FighterPricesResponse> => {
   // Construct the URL with query parameters
-  const url = new URL(`${API_BASE_URL}/v1/arena/matches/${matchId}/fighter-prices`);
+  const url = new URL(`${API_BASE_URL}/v1/auth/matches/${matchId}/fighter-prices`);
   url.searchParams.append('interval', interval);
   url.searchParams.append('count', count.toString());
 

@@ -7,25 +7,51 @@ interface BattleArenaProps {
   gameMode: GameMode;
 }
 
+// Define more specific types for Twitch embed
+type TwitchPlayer = {
+  play: () => void;
+  pause: () => void;
+  setVolume: (volume: number) => void;
+  getMuted: () => boolean;
+  setMuted: (muted: boolean) => void;
+  getChannel: () => string;
+  setChannel: (channel: string) => void;
+  setQuality: (quality: string) => void;
+};
+
+type TwitchEmbed = {
+  getPlayer: () => TwitchPlayer;
+  addEventListener: (event: string, callback: () => void) => void;
+};
+
 declare global {
   interface Window {
     Twitch?: {
       Embed: {
-        new (elementId: string, options: any): {
-          getPlayer: () => any;
-          addEventListener: (event: string, callback: () => void) => void;
-        };
+        new (elementId: string, options: TwitchEmbedOptions): TwitchEmbed;
         VIDEO_READY: string;
       };
     };
   }
 }
 
+interface TwitchEmbedOptions {
+  width: number | string;
+  height: number | string;
+  channel: string;
+  layout?: string;
+  autoplay?: boolean;
+  muted?: boolean;
+  theme?: string;
+  interactive?: boolean;
+  parent: string[];
+}
+
 const BattleArena: React.FC<BattleArenaProps> = ({
   gameMode
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const embedRef = useRef<any>(null);
+  const embedRef = useRef<TwitchEmbed | null>(null);
   const embedContainerId = "twitch-embed-container";
 
   // Initialize Twitch embed when component mounts
