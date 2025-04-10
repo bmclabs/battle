@@ -29,6 +29,7 @@ export const MobileBlocker: React.FC = () => {
     <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center px-6 text-center">
       <div className="max-w-md">
         <div className="flex justify-center mb-8">
+          <div className="relative w-[200px] h-[80px]">
           <Image
             src="/logo/bmc-logo.gif"
             alt="Battle Memecoin Club"
@@ -36,6 +37,7 @@ export const MobileBlocker: React.FC = () => {
             height={80}
             className="object-contain"
           />
+          </div>
         </div>
         
         <div className="bg-[#14F195]/10 p-6 rounded-lg border border-[#14F195]/30">

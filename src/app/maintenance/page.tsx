@@ -27,13 +27,15 @@ export default function MaintenancePage() {
       <div className="w-full max-w-3xl p-8 bg-black/80 border-2 border-primary text-center retro-container">
         <div className="mb-6">
           <div className="flex justify-center mb-4">
-            <Image
-              src="/logo/bmc-logo.gif"
-              alt="Battle Memecoin Club"
-              width={240}
-              height={100}
-              className="object-contain"
-            />
+            <div className="relative w-[240px] h-[100px] flex items-center justify-center">
+                <Image
+                  src="/logo/bmc-logo.gif"
+                  alt="Battle Memecoin Club"
+                  width={140}
+                  height={60}
+                  className="object-contain"
+                />
+            </div>
           </div>
         </div>
         
@@ -42,15 +44,11 @@ export default function MaintenancePage() {
           
           <div className="bg-black/50 p-6 rounded-lg border border-[#14F195]/30">
             <p className="text-white text-lg mb-4">
-              We`&apos;re making Battle Memecoin Club even better!
+              We&apos;re making Battle Memecoin Club even better!
             </p>
             
             <p className="text-gray-300 mb-3">
-              Our team is currently implementing major performance improvements and exciting new features to enhance your gaming experience. During this time, all battles and betting functionalities are temporarily unavailable.
-            </p>
-            
-            <p className="text-gray-300 mb-3">
-              These upgrades include:
+              Our team is currently implementing major improvements. During this time, all battles and betting functionalities are temporarily unavailable.
             </p>
             
             <p className="text-gray-300">
