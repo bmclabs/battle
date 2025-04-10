@@ -42,7 +42,7 @@ export default function MaintenancePage() {
           
           <div className="bg-black/50 p-6 rounded-lg border border-[#14F195]/30">
             <p className="text-white text-lg mb-4">
-              We're making Battle Memecoin Club even better!
+              We`&apos;re making Battle Memecoin Club even better!
             </p>
             
             <p className="text-gray-300 mb-3">
