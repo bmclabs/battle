@@ -30,8 +30,8 @@ export const MaintenanceBannerWrapper: React.FC = () => {
   
   return (
     <MaintenanceBanner 
-      message="Scheduled maintenance coming soon" 
-      scheduledTime="June 30, 2024 at 02:00 UTC"
+      message="Scheduled system upgrade for performance and new features" 
+      scheduledTime="July 15, 2024 at 04:00 UTC"
     />
   );
 }; 
