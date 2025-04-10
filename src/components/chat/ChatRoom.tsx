@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { formatWalletAddress } from '../../utils';
 import Button from '../ui/Button';
 import { useChat } from '../../hooks/useChat';
+// import { useBetting } from '../../hooks/useBetting';
+// import { useMatch } from '../../hooks/useMatch';
 
 interface ChatRoomProps {
   walletAddress: string;
@@ -20,13 +22,23 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   const [autoScroll, setAutoScroll] = useState(true);
   const [userScrolled, setUserScrolled] = useState(false);
   
+  // Get current match
+  // const { match } = useMatch();
+  // const matchId = match?.matchId || '';
+  
   // Use the chat hook
-  const { messages, users, error, sendMessage } = useChat({
+  const { messages, error, sendMessage } = useChat({
     roomId: 'global',
     userId: userId,
     walletAddress,
     isConnected: connected
   });
+
+  // Get betting data
+  // const { userBets } = useBetting({ matchId });
+  
+  // Get the most recent bet if it exists
+  // const latestBet = userBets && userBets.length > 0 ? userBets[0] : null;
 
   // Check if user is near bottom of chat
   const isNearBottom = () => {
@@ -135,19 +147,22 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         )}
       </div>
       
-      {/* Connected users */}
-      {users.length > 0 && (
-        <div className="px-2 py-1 border-t border-primary bg-black/50 flex items-center justify-between">
+      {/* Footer info - Show either placed bet or connected users */}
+      {/* <div className="px-2 py-1 border-t border-primary bg-black/50 flex items-center justify-between">
+        {latestBet && (
           <p className="text-gray-400 text-xs">
-            {users.length} user{users.length !== 1 ? 's' : ''}
+            Placed bet: <span className="text-[#14F195] font-semibold">{latestBet.fighterName}</span>
           </p>
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-[#14F195] rounded-full animate-pulse mr-1 ml-4"></div>
-            <p className="text-gray-400 text-xs mr-4">online</p>
-          </div>
-          
+        )}
+        
+        <div className="flex items-center">
+          {latestBet && (
+            <p className="text-gray-400 text-xs mr-4">
+              <span className="text-[#14F195] font-semibold">{formatSolAmount(latestBet.amount)}</span> SOL
+            </p>
+          )}
         </div>
-      )}
+      </div> */}
       
       {/* Message input */}
       <form onSubmit={handleSendMessage} className="p-2 border-t border-primary">
