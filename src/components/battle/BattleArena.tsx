@@ -93,7 +93,7 @@ const BattleArena: React.FC<BattleArenaProps> = ({
       muted: false,
       theme: 'dark',
       interactive: false,
-      parent: [hostname, 'arena.battlememecoin.club', 'https://game-rose-rho.vercel.app/', 'localhost'], // Include both current hostname and localhost
+      parent: [hostname, 'arena.battlememecoin.club', 'game-rose-rho.vercel.app', 'localhost'], // Include both current hostname and localhost
     });
 
     // Add event listener for when the player is ready

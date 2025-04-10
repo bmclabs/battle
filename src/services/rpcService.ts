@@ -29,8 +29,7 @@ class RpcService {
   /**
    * Send a JSON-RPC request through our proxy
    */
-  /* eslint-disable  @typescript-eslint/no-explicit-any */
-  private async sendJsonRpcRequest(method: string, params: any[]): Promise<any> {
+  private async sendJsonRpcRequest(method: string, params: unknown[]): Promise<unknown> {
     if (!this.proxyUrl) {
       throw new Error('Proxy URL not configured');
     }
@@ -40,7 +39,6 @@ class RpcService {
       headers: {
         'Content-Type': 'application/json',
       },
-      /* eslint-disable  @typescript-eslint/no-explicit-any */
       body: JSON.stringify({
         jsonrpc: '2.0',
         id: 1,
@@ -78,7 +76,7 @@ class RpcService {
    */
   async getBalance(publicKey: PublicKey): Promise<number> {
     if (this.proxyUrl) {
-      return this.sendJsonRpcRequest('getBalance', [publicKey.toBase58()]);
+      return this.sendJsonRpcRequest('getBalance', [publicKey.toBase58()]) as Promise<number>;
     } else {
       return this.connection.getBalance(publicKey);
     }

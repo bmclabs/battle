@@ -9,9 +9,16 @@ const nextConfig = {
   },
   // Server external packages that need special handling
   serverExternalPackages: ['sharp', 'canvas'],
-  // Suppress hydration warnings for body attributes added by browser extensions
-  experimental: {
-    suppressHydrationWarning: true,
+  // experimental settings
+  experimental: {},
+  // Ensure .well-known directory is accessible
+  async rewrites() {
+    return [
+      {
+        source: '/.well-known/:path*',
+        destination: '/api/well-known/:path*',
+      },
+    ];
   },
 };
 
