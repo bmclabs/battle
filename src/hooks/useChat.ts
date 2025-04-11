@@ -14,6 +14,7 @@ interface UseChatOptions {
   roomId?: string;
   userId?: string;
   walletAddress?: string;
+  username?: string;
   isConnected: boolean;
 }
 
@@ -21,6 +22,7 @@ export const useChat = ({
   roomId = 'global', 
   userId = '', 
   walletAddress = '',
+  username = '',
   isConnected
 }: UseChatOptions) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -110,7 +112,7 @@ export const useChat = ({
     }
     
     try {
-      sendChatMessage(roomId, userId, walletAddress, message);
+      sendChatMessage(roomId, userId, walletAddress, message, username);
       
       // We don't need to update the messages state here
       // because the message will come back through the socket
@@ -120,7 +122,7 @@ export const useChat = ({
       setError('Failed to send message');
       console.error('Error sending message:', err);
     }
-  }, [roomId, userId, walletAddress, isConnected]);
+  }, [roomId, userId, walletAddress, isConnected, username]);
   
   return {
     messages,

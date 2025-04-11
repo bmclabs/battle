@@ -70,6 +70,7 @@ export interface ChatMessage {
   userId?: string;
   roomId?: string;
   walletAddress: string;
+  username?: string;
   message: string;
   timestamp: number;
 }

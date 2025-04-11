@@ -1,14 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Button from './ui/Button';
 import { formatWalletAddress, formatSolAmount } from '../utils';
 import { useWalletAuth } from '@/lib/context/WalletContext';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import ProfileModal from './profile/ProfileModal';
 
 const WalletConnect: React.FC = () => {
   const { connected, walletAddress, balance, connecting, user, signIn, signOut } = useWalletAuth();
   const { setVisible } = useWalletModal();
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const handleConnect = async () => {
     if (!connected) {
@@ -18,6 +20,10 @@ const WalletConnect: React.FC = () => {
     }
   };
 
+  const handleWalletAddressClick = () => {
+    setIsProfileModalOpen(true);
+  };
+
   return (
     <div className="flex items-center space-x-4">
       {connected ? (
@@ -25,7 +31,10 @@ const WalletConnect: React.FC = () => {
           <div className="flex gap-2 bg-black/70 px-4 py-2 border border-primary rounded retro-container">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-              <span className="text-white text-[10px]">
+              <span 
+                className="text-white text-[10px] cursor-pointer hover:text-primary transition-colors"
+                onClick={handleWalletAddressClick}
+              >
                 {user?.username ? `${user.username} | ` : ''}{formatWalletAddress(walletAddress || '')} |
               </span>
             </div>
@@ -51,6 +60,17 @@ const WalletConnect: React.FC = () => {
         >
           CONNECT WALLET
         </Button>
+      )}
+
+      {connected && walletAddress && (
+        <ProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          walletAddress={walletAddress}
+          username={user?.username}
+          balance={balance}
+          isOwnProfile={true}
+        />
       )}
     </div>
   );

@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { formatWalletAddress } from '../../utils';
 import Button from '../ui/Button';
 import { useChat } from '../../hooks/useChat';
+import ProfileModal from '../profile/ProfileModal';
+import { useWalletAuth } from '@/lib/context/WalletContext';
 // import { useBetting } from '../../hooks/useBetting';
 // import { useMatch } from '../../hooks/useMatch';
 
@@ -21,6 +23,15 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
   const [userScrolled, setUserScrolled] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<{
+    address: string;
+    username?: string;
+    balance?: number;
+    isOwnProfile: boolean;
+  } | null>(null);
+  
+  // Get wallet auth context to access balance
+  const { balance, user } = useWalletAuth();
   
   // Get current match
   // const { match } = useMatch();
@@ -31,6 +42,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     roomId: 'global',
     userId: userId,
     walletAddress,
+    username: user?.username,
     isConnected: connected
   });
 
@@ -62,6 +74,20 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     }
   };
 
+  // Handle clicking on a user in the chat
+  const handleUserClick = (address: string, username?: string) => {
+    if (address === 'system') return;
+    
+    const isOwnProfile = address === walletAddress;
+    
+    setSelectedProfile({
+      address,
+      username,
+      balance: isOwnProfile ? balance : undefined,
+      isOwnProfile
+    });
+  };
+
   // Auto-scroll when new messages arrive, but only if we're already at the bottom
   // or if the user hasn't manually scrolled
   useEffect(() => {
@@ -78,6 +104,26 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     setMessage('');
     // Enable auto-scroll when sending a message
     setAutoScroll(true);
+  };
+
+  // Format display name for chat message
+  const formatDisplayName = (message: typeof messages[0]) => {
+    if (message.walletAddress === 'system') {
+      return 'SYSTEM';
+    }
+    
+    // If message has a username, show it
+    if (message.username) {
+      return message.username;
+    }
+    
+    // For the current user's messages, use their username if available
+    if (message.walletAddress === walletAddress && user?.username) {
+      return user.username;
+    }
+    
+    // Fallback to formatted wallet address
+    return formatWalletAddress(message.walletAddress);
   };
 
   return (
@@ -110,12 +156,14 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className={`text-xs font-bold ${
-                    msg.walletAddress === 'system' ? 'text-gray-400' : 'text-[#14F195]'
-                  }`}>
-                    {msg.walletAddress === 'system' 
-                      ? 'SYSTEM' 
-                      : formatWalletAddress(msg.walletAddress)}
+                  <span 
+                    className={`text-xs font-bold ${
+                      msg.walletAddress === 'system' ? 'text-gray-400' : 'text-[#14F195]'
+                    } ${msg.walletAddress !== 'system' ? 'cursor-pointer hover:underline' : ''}`}
+                    onClick={() => msg.walletAddress !== 'system' && handleUserClick(msg.walletAddress, msg.username)}
+                    title={msg.walletAddress !== 'system' ? msg.walletAddress : undefined}
+                  >
+                    {formatDisplayName(msg)}
                   </span>
                   <span className="text-[10px] text-gray-500">
                     {new Date(msg.timestamp).toLocaleTimeString()}
@@ -197,6 +245,18 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         <div className="p-2 bg-red-900/50 border-t border-red-500">
           <p className="text-red-300 text-xs">{error}</p>
         </div>
+      )}
+
+      {/* User profile modal */}
+      {selectedProfile && (
+        <ProfileModal
+          isOpen={!!selectedProfile}
+          onClose={() => setSelectedProfile(null)}
+          walletAddress={selectedProfile.address}
+          username={selectedProfile.username}
+          balance={selectedProfile.balance}
+          isOwnProfile={selectedProfile.isOwnProfile}
+        />
       )}
     </div>
   );

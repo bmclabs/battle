@@ -169,8 +169,15 @@ export const leaveChatRoom = (roomId: string, userId: string, walletAddress: str
  * @param userId user ID
  * @param walletAddress user's wallet address
  * @param message the message text
+ * @param username optional username to include with the message
  */
-export const sendChatMessage = (roomId: string, userId: string, walletAddress: string, message: string): void => {
+export const sendChatMessage = (
+  roomId: string, 
+  userId: string, 
+  walletAddress: string, 
+  message: string,
+  username?: string
+): void => {
   const socket = getSocket();
   
   if (!socket.connected || !userId || !walletAddress || !message.trim()) {
@@ -183,7 +190,8 @@ export const sendChatMessage = (roomId: string, userId: string, walletAddress: s
     roomId,
     walletAddress,
     message: message.trim(),
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    username
   };
   
   console.log(`Sending message to room ${roomId}`);
