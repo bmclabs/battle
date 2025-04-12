@@ -6,8 +6,11 @@ export enum GameMode {
   CLAIMING = 'claiming',
   COMPLETED = 'completed',
   REFUND = 'refund',
-  REFUND_FAILED = 'refund-failed',
-  PAUSED = 'paused'
+  REFUND_FAILED = 'refund_failed',
+  PAUSED = 'paused',
+  BATTLE_FAILED = 'battle_failed',
+  END_FAILED = 'end_failed',
+  CLAIM_FAILED = 'claim_failed'
 }
 
 export interface Fighter {

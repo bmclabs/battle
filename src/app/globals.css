@@ -152,6 +152,25 @@ body {
   border: 2px solid var(--secondary);
 }
 
+/* Custom scrollbar for leaderboard */
+.leaderboard-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.leaderboard-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 5px;
+}
+
+.leaderboard-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(20, 241, 149, 0.4);
+  border-radius: 5px;
+}
+
+.leaderboard-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 241, 149, 0.6);
+}
+
 /* Pixel Art Animations */
 .pixelated {
   image-rendering: pixelated;

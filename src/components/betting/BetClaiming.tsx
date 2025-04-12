@@ -50,7 +50,7 @@ const BetClaiming: React.FC<BetClaimingProps> = ({
       <div className="flex-1 flex flex-col items-center justify-center gap-4">
         {userWon ? (
           <>
-            <div className="text-[#14F195] text-center font-bold text-xl pixel-pulse">
+            <div className="text-[#14F195] text-center font-bold text-lg pixel-pulse">
               CONGRATULATIONS!
             </div>
             <div className="text-white text-center">

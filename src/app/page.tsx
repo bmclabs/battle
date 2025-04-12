@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import Header from '../components/Header';
 import BattleArena from '../components/battle/BattleArena';
-import ChatRoom from '../components/chat/ChatRoom';
+import ChatContainer from '../components/chat/ChatContainer';
 import BettingPanel from '../components/betting/BettingPanel';
 import BetsList from '../components/betting/BetsList';
 import BetPlacedPanel from '../components/betting/BetPlacedPanel';
@@ -20,6 +20,7 @@ import BetClaiming from '@/components/betting/BetClaiming';
 import BetRefund from '@/components/betting/BetRefund';
 import BetRefundFailed from '@/components/betting/BetRefundFailed';
 import BetLogo from '@/components/betting/BetLogo';
+import BetLoading from '@/components/betting/BetLoading';
 import Link from 'next/link';
 import OnboardingModal from '@/components/OnboardingModal';
 import useOnboarding from '@/hooks/useOnboarding';
@@ -137,7 +138,7 @@ export default function Home() {
       <main className="flex-1 container mx-auto p-4 z-10">
         {matchLoading ? (
           <div className="flex items-center justify-center h-64">
-            <p className="text-white text-xl pixel-glitch">Loading battle...</p>
+            <p className="text-white text-xl">Loading battle...</p>
           </div>
         ) : (
           <div className="flex flex-col">
@@ -152,15 +153,21 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* CASE 1: Show Paused Bet panel when in paused mode or loading */}
-                {(gameMode === GameMode.PAUSED || 
-                  bettingLoading) && (
+                {/* CASE 1: Show BetLoading during loading state */}
+                {bettingLoading && (
+                  <div className="h-full">
+                    <BetLoading />
+                  </div>
+                )}
+
+                {/* CASE 2: Show Paused Bet panel when in paused mode or loading */}
+                {(gameMode === GameMode.PAUSED) && (
                     <div className="h-full">
                       <BetPaused />
                     </div>
                 )}
 
-                {/* CASE 2: Show BetPlacedPanel when user has a bet and not loading */}
+                {/* CASE 3: Show BetPlacedPanel when user has a bet and not loading */}
                 {gameMode === GameMode.PREPARATION && 
                  connected &&
                  userPlacedBet && 
@@ -174,7 +181,7 @@ export default function Home() {
                     </div>
                 )}
 
-                {/* CASE 3: Show BettingPanel when in preparation, no bet, and not loading */}
+                {/* CASE 4: Show BettingPanel when in preparation, no bet, and not loading */}
                 {gameMode === GameMode.PREPARATION && 
                  !userPlacedBet && 
                  !bettingLoading && (
@@ -188,7 +195,7 @@ export default function Home() {
                   />
                 )}
                 
-                {/* CASE 4: Show BetsList during battle */}
+                {/* CASE 5: Show BetsList during battle */}
                 {gameMode === GameMode.BATTLE && !bettingLoading && (
                   <div className="h-full">
                     <BetsList
@@ -200,7 +207,7 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* CASE 5: Show BetClaiming during claiming state */}
+                {/* CASE 6: Show BetClaiming during claiming state */}
                 {gameMode === GameMode.CLAIMING && !bettingLoading && (
                   <div className="h-full">
                     <BetClaiming
@@ -212,7 +219,7 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* CASE 6: Show BetRefund during refund state */}
+                {/* CASE 7: Show BetRefund during refund state */}
                 {gameMode === GameMode.REFUND && !bettingLoading && (
                   <div className="h-full">
                     <BetRefund
@@ -223,7 +230,7 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* CASE 7: Show BetRefundFailed during refund failed state */}
+                {/* CASE 8: Show BetRefundFailed during refund failed state */}
                 {gameMode === GameMode.REFUND_FAILED && !bettingLoading && (
                   <div className="h-full">
                     <BetRefundFailed
@@ -244,12 +251,12 @@ export default function Home() {
                 />
               </div>
               
-              {/* Chat Room (right) */}
+              {/* Chat Container (right) */}
               <div className="col-span-3 h-full">
-                <ChatRoom
+                <ChatContainer
                   walletAddress={walletAddress || ''}
                   connected={connected}
-                  userId={user?.id}
+                  userId={user?.id || ''}
                 />
               </div>
             </div>

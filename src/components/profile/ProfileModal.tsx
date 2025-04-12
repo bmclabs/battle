@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { formatWalletAddress, formatSolAmount } from '@/utils';
+import React, { useState, useEffect, useRef } from 'react';
+import { formatWalletAddress } from '@/utils';
 import { useProfile } from '@/hooks/useProfile';
+import { useUserStats } from '@/hooks/useUserStats';
 import BettingHistory from './BettingHistory';
+import SolAmount from '@/components/ui/SolAmount';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -24,11 +26,48 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'profile' | 'history'>('profile');
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
+  const previousWalletRef = useRef<string | null>(null);
+  const initializedRef = useRef<boolean>(false);
   
-  // Use profile hook to get betting history
-  const { bettingHistory, pagination, loading, error, changePage } = useProfile({
+  // Only fetch data when modal is open and wallet address has changed
+  // const shouldFetchData = isOpen && (previousWalletRef.current !== walletAddress || !initializedRef.current);
+  
+  // Use profile hook to get betting history - always fetch when modal is open but avoid unnecessary requests
+  const { bettingHistory, pagination, loading, error, changePage, refresh: refreshHistory } = useProfile({
     walletAddress: isOpen ? walletAddress : null
   });
+
+  // Use user stats hook to get detailed statistics - always fetch when modal is open
+  const { stats, loading: statsLoading, refetch: refreshStats } = useUserStats({
+    walletAddress: isOpen ? walletAddress : null
+  });
+  
+  // Keep track of the wallet address that's been loaded
+  useEffect(() => {
+    if (isOpen && walletAddress) {
+      previousWalletRef.current = walletAddress;
+      initializedRef.current = true;
+    }
+  }, [isOpen, walletAddress]);
+  
+  // Reset the initialization flag when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      initializedRef.current = false;
+    }
+  }, [isOpen]);
+
+  // Refresh data when modal is opened
+  useEffect(() => {
+    if (isOpen && previousWalletRef.current === walletAddress) {
+      // Only refresh if we're reopening the modal for the same wallet
+      if (activeTab === 'history') {
+        refreshHistory();
+      } else {
+        refreshStats();
+      }
+    }
+  }, [isOpen]);
 
   // Copy wallet address to clipboard
   const copyWalletAddress = () => {
@@ -40,6 +79,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       .catch(err => {
         console.error('Failed to copy wallet address:', err);
       });
+  };
+
+  // Handle tab changes
+  const handleTabChange = (tab: 'profile' | 'history') => {
+    setActiveTab(tab);
+    
+    // If changing to history tab and no data is loaded yet, refresh it
+    if (tab === 'history' && bettingHistory.length === 0 && !loading) {
+      refreshHistory();
+    }
   };
 
   if (!isOpen) return null;
@@ -54,7 +103,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -71,7 +120,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 ? 'text-[#14F195] border-b-2 border-[#14F195]'
                 : 'text-gray-400 hover:text-white'
             }`}
-            onClick={() => setActiveTab('profile')}
+            onClick={() => handleTabChange('profile')}
           >
             Profile
           </button>
@@ -81,7 +130,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 ? 'text-[#14F195] border-b-2 border-[#14F195]'
                 : 'text-gray-400 hover:text-white'
             }`}
-            onClick={() => setActiveTab('history')}
+            onClick={() => handleTabChange('history')}
           >
             Betting History
           </button>
@@ -126,7 +175,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                     </div>
                     {isOwnProfile && (
                       <p className="text-[#14F195] font-medium">
-                        {formatSolAmount(balance)} SOL
+                        <SolAmount amount={balance} iconSize={24} />
                       </p>
                     )}
                   </div>
@@ -138,30 +187,80 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 <div className="bg-black/50 p-4 rounded-md border border-gray-800">
                   <p className="text-gray-400 text-xs mb-1">Total Bets</p>
                   <p className="text-white text-xl font-medium">
-                    {pagination.total || '0'}
+                    {statsLoading 
+                      ? 'Loading...' 
+                      : stats?.detailedStats?.totalCompletedBets || pagination.total || '0'}
                   </p>
                 </div>
                 <div className="bg-black/50 p-4 rounded-md border border-gray-800">
                   <p className="text-gray-400 text-xs mb-1">Win Rate</p>
                   <p className="text-white text-xl font-medium">
-                    {pagination.total > 0
-                      ? `${Math.round((bettingHistory.filter(bet => bet.isWinningBet).length / pagination.total) * 100)}%`
-                      : '0%'}
+                    {statsLoading 
+                      ? 'Loading...' 
+                      : stats?.detailedStats?.completedWinRate 
+                        ? `${stats.detailedStats.completedWinRate.toFixed(2)}%` 
+                        : (pagination.total > 0
+                          ? `${Math.round((bettingHistory.filter(bet => bet.isWinningBet).length / pagination.total) * 100)}%`
+                          : '0%')}
                   </p>
                 </div>
               </div>
+
+              {/* Additional detailed statistics */}
+              {stats && !statsLoading && (
+                <div className="bg-black/50 p-4 rounded-md border border-gray-800">
+                  <h3 className="text-[#14F195] text-sm font-medium mb-3">Detailed Statistics</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-gray-400 text-xs mb-1">Won Bets</p>
+                      <p className="text-white text-lg font-medium">{stats.detailedStats.wonCompletedBets}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-xs mb-1">Lost Bets</p>
+                      <p className="text-white text-lg font-medium">{stats.detailedStats.lostCompletedBets}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-xs mb-1">Total Earnings</p>
+                      <p className="text-white text-lg font-medium">
+                        <SolAmount amount={stats.totalEarnings} iconSize={26} />
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-xs mb-1">Biggest Win</p>
+                      <p className="text-white text-lg font-medium">
+                        <SolAmount amount={stats.detailedStats.biggestWin} iconSize={26} />
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
-          // Betting history without scrolling behavior
           <div className="flex-1">
-            <BettingHistory
-              history={bettingHistory}
-              pagination={pagination}
-              loading={loading}
-              error={error}
-              onPageChange={changePage}
-            />
+            {loading ? (
+              <div className="flex justify-center items-center h-40">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#14F195] mb-2"></div>
+              </div>
+            ) : bettingHistory.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                {error ? `Error: ${error}` : "No betting history found."}
+                {/* <button 
+                  onClick={refreshHistory}
+                  className="mt-2 px-4 py-2 text-sm text-[#14F195] border border-[#14F195] rounded-md hover:bg-[#14F195]/10 block mx-auto"
+                >
+                  Refresh
+                </button> */}
+              </div>
+            ) : (
+              <BettingHistory
+                history={bettingHistory}
+                pagination={pagination}
+                loading={loading}
+                error={error}
+                onPageChange={changePage}
+              />
+            )}
           </div>
         )}
       </div>

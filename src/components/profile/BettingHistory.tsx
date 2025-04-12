@@ -1,6 +1,6 @@
 import React from 'react';
 import { BettingHistoryItem, Pagination } from '@/services/profile';
-import { formatSolAmount, formatWalletAddress } from '@/utils';
+import SolAmount from '@/components/ui/SolAmount';
 
 interface BettingHistoryProps {
   history: BettingHistoryItem[];
@@ -69,12 +69,20 @@ const BettingHistory: React.FC<BettingHistoryProps> = ({
         bgColor: 'bg-yellow-900/20'
       };
     }
+
+    if (bet.matchStatus === 'battle_failed' || bet.matchStatus === 'end_failed' || bet.matchStatus === 'claim_failed') {
+      return {
+        text: 'FAILED',
+        color: 'text-gray-400',
+        bgColor: 'bg-gray-500/20'
+      };
+    }
     
     // For ongoing matches
     return {
-      text: 'ACTIVE',
+      text: 'PENDING',
       color: 'text-blue-400',
-      bgColor: 'bg-blue-900/20'
+      bgColor: 'bg-blue-500/20'
     };
   };
 
@@ -176,12 +184,12 @@ const BettingHistory: React.FC<BettingHistoryProps> = ({
                         >
                           {statusDetails.text}
                         </div>
-                        <span className="text-xs text-gray-400">
+                        <span className="text-[10px] text-gray-400">
                           {formatBetTime(bet.betTime)}
                         </span>
                       </div>
                       
-                      <p className="text-sm">
+                      <p className="text-sm flex items-center">
                         <span className="text-gray-400 mr-1">Bet on:</span>
                         <span 
                           className="font-medium"
@@ -189,6 +197,9 @@ const BettingHistory: React.FC<BettingHistoryProps> = ({
                         >
                           {bet.fighterName}
                         </span>
+                        {bet.claimed && (
+                            <span className="text-[#14F195] ml-1 text-[10px] items-center border border-[#14F195] px-1 rounded-sm">claimed</span>
+                          )}
                       </p>
                       
                       <p className="text-xs text-gray-400 mt-1">
@@ -201,7 +212,7 @@ const BettingHistory: React.FC<BettingHistoryProps> = ({
                       <div className="text-sm">
                         <span className="text-gray-400 mr-1">Bet:</span>
                         <span className="text-white font-medium">
-                          {formatSolAmount(bet.amount)} SOL
+                          <SolAmount amount={bet.amount} />
                         </span>
                       </div>
                       
@@ -209,7 +220,7 @@ const BettingHistory: React.FC<BettingHistoryProps> = ({
                         <div className="text-sm">
                           <span className="text-gray-400 mr-1">Won:</span>
                           <span className="text-green-400 font-medium">
-                            {formatSolAmount(bet.amount * bet.prizeShare)} SOL
+                            <SolAmount amount={bet.prizeShare} className="text-green-400" />
                           </span>
                         </div>
                       )}
@@ -239,7 +250,7 @@ const BettingHistory: React.FC<BettingHistoryProps> = ({
                 className={`p-2 rounded-md ${
                   pagination.page <= 1 || loading
                     ? 'text-gray-600 cursor-not-allowed'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800 cursor-pointer'
                 }`}
                 title="First page"
               >
@@ -256,7 +267,7 @@ const BettingHistory: React.FC<BettingHistoryProps> = ({
                 className={`p-2 rounded-md ${
                   pagination.page <= 1 || loading
                     ? 'text-gray-600 cursor-not-allowed'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800 cursor-pointer'
                 }`}
                 title="Previous page"
               >
@@ -280,7 +291,7 @@ const BettingHistory: React.FC<BettingHistoryProps> = ({
                             ? 'bg-primary/20 text-primary border border-primary/30'
                             : loading 
                               ? 'text-gray-600 cursor-not-allowed'
-                              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                              : 'text-gray-400 hover:bg-gray-800 hover:text-white cursor-pointer'
                         }`}
                       >
                         {pageNum}
@@ -297,7 +308,7 @@ const BettingHistory: React.FC<BettingHistoryProps> = ({
                 className={`p-2 rounded-md ${
                   pagination.page >= (pagination.totalPages || 1) || loading
                     ? 'text-gray-600 cursor-not-allowed'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800 cursor-pointer'
                 }`}
                 title="Next page"
               >
@@ -313,7 +324,7 @@ const BettingHistory: React.FC<BettingHistoryProps> = ({
                 className={`p-2 rounded-md ${
                   pagination.page >= (pagination.totalPages || 1) || loading
                     ? 'text-gray-600 cursor-not-allowed'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800 cursor-pointer'
                 }`}
                 title="Last page"
               >

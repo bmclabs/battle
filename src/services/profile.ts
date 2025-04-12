@@ -31,6 +31,40 @@ export interface BettingHistoryResponse {
   pagination: Pagination;
 }
 
+export interface UserStats {
+  totalBets: number;
+  wonBets: number;
+  lostBets: number;
+  totalEarnings: number;
+  winRate: number;
+  detailedStats: {
+    totalAllBets: number;
+    totalCompletedBets: number;
+    wonCompletedBets: number;
+    lostCompletedBets: number;
+    pendingBets: number;
+    cancelledBets: number;
+    totalEarningsCompleted: number;
+    totalBetAmount: number;
+    avgPrize: number;
+    biggestWin: number;
+    matchesParticipated: number;
+    completedWinRate: number;
+  };
+  weeklyStats: {
+    week: string;
+    wins: number;
+    losses: number;
+    earnings: number;
+    winRate: number;
+  }[];
+}
+
+export interface UserStatsResponse {
+  success: boolean;
+  data: UserStats;
+}
+
 /**
  * Get betting history for a wallet address
  * @param walletAddress Wallet address to get history for
@@ -75,6 +109,43 @@ export const getUserBettingHistory = async (
     return await response.json();
   } catch (error) {
     console.error('Error fetching betting history:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get detailed user statistics
+ * @param walletAddress The wallet address to get statistics for
+ * @returns User statistics data
+ */
+export const getUserStats = async (walletAddress: string): Promise<UserStatsResponse> => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/v1/profile/stats?walletAddress=${walletAddress}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('User not found');
+      }
+      
+      if (response.status === 400) {
+        throw new Error('Wallet address is required');
+      }
+      
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Failed to fetch user stats: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching user stats:', error);
     throw error;
   }
 }; 

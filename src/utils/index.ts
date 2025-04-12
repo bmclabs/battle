@@ -5,11 +5,10 @@ export const formatWalletAddress = (address: string): string => {
 };
 
 /**
- * Format a number with custom decimal logic:
- * - If the number is an integer, display it without decimals
- * - If all three decimal digits are the same, display 1 decimal place
- * - If the 2nd and 3rd decimal digits are the same, display 2 decimal places
- * - Otherwise display 3 decimal places
+ * Format a SOL amount with proper precision
+ * - Displays up to 4 decimal places
+ * - Never rounds up
+ * - Preserves trailing zeros if they are significant
  */
 export const formatSolAmount = (value: number | string): string => {
   // Convert to number if string
@@ -20,33 +19,28 @@ export const formatSolAmount = (value: number | string): string => {
     return '0';
   }
   
-  // Check if the number is an integer (no decimal part)
-  if (Number.isInteger(numValue)) {
-    return numValue.toString();
+  // Use Math.floor to prevent rounding up
+  // First, multiply by 10000 to preserve 4 decimal places
+  const flooredValue = Math.floor(numValue * 10000) / 10000;
+  
+  // Convert to string with fixed decimal places (up to 4)
+  const strValue = flooredValue.toString();
+  
+  // If it's an integer, return as is
+  if (strValue.indexOf('.') === -1) {
+    return strValue;
   }
-
-  // Convert to string with enough precision to analyze
-  const strValue = numValue.toFixed(4);
   
   // Split by decimal point
   const parts = strValue.split('.');
+  const wholePart = parts[0];
   const decimalPart = parts[1];
   
-  // Check decimal digits
-  const firstDigit = decimalPart.charAt(0);
-  const secondDigit = decimalPart.charAt(1);
-  const thirdDigit = decimalPart.charAt(2);
-  
-  // If all three decimal digits are the same (e.g., 1.111)
-  if (firstDigit === secondDigit && secondDigit === thirdDigit) {
-    return numValue.toFixed(1);
+  // If decimal part is shorter than 4 digits, keep it as is
+  if (decimalPart.length <= 4) {
+    return strValue;
   }
   
-  // If second and third digits are the same (e.g., 1.122)
-  if (secondDigit === thirdDigit) {
-    return numValue.toFixed(2);
-  }
-  
-  // Otherwise show 3 decimal places (e.g., 1.123)
-  return numValue.toFixed(3);
+  // Otherwise, truncate to 4 decimal places without rounding
+  return `${wholePart}.${decimalPart.substring(0, 4)}`;
 };

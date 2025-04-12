@@ -1,5 +1,6 @@
 import React from 'react';
 import { Fighter } from '../../types';
+import SolAmount from '@/components/ui/SolAmount';
 
 interface FighterInfoProps {
   fighter: Fighter;
@@ -18,9 +19,9 @@ const FighterInfo: React.FC<FighterInfoProps> = ({
         
         <div>
           <h3 className="text-white text-lg font-bold">{fighter.name}</h3>
-          <p className={`${isPrimary ? 'text-primary' : 'text-secondary'} text-sm`}>
-            Total Bets: {totalBets.toFixed(2)} SOL
-          </p>
+          <div className="mb-1 text-gray-400 text-xs">
+            Total Bets: <SolAmount amount={totalBets} iconSize={12} />
+          </div>
         </div>
       </div>
     </div>
